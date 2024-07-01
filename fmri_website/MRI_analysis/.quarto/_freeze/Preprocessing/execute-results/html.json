@@ -1,0 +1,14 @@
+{
+  "hash": "589e63fb30bdb793133c12607cbe22a4",
+  "result": {
+    "markdown": "---\ntitle: \"Preprocessing\"\nauthor: \"Anastasios Dadiotis\"\neditor: visual\ntoc: true\nformat:\n  html:\n    code-tools: true\n    self-contained: true\n---\n\n::: {.cell}\n::: {.cell-output-display}\n`<div style=\"width: 100% ; height: 400px ; text-align: center; box-sizing: border-box; -moz-box-sizing: border-box; -webkit-box-sizing: border-box;\" class=\"muted well\">Shiny applications not supported in static R Markdown documents</div>`{=html}\n:::\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

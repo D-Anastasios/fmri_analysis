@@ -1,0 +1,50 @@
+{
+  "MRIQC_BOLD.qmd": {
+    "MRIQC_BOLD.html": "dfa1ef49"
+  },
+  "resources/Visual Reports MRIQC Unprocessed BOLD data + small intro.md": {
+    "Visual Reports MRIQC Unprocessed BOLD data + small intro.html": "6a2ccbd4"
+  },
+  "resources/Visual Reports of fMRIPrep.md": {
+    "Visual Reports of fMRIPrep.html": "c62c8485"
+  },
+  "resources/Visual Reports MRIQC unprocessed T1w data.md": {
+    "Visual Reports MRIQC unprocessed T1w data.html": "063ef1a6"
+  },
+  "index.qmd": {
+    "index.html": "41a2bff5"
+  },
+  "MRIQC_Anat.qmd": {
+    "MRIQC_Anat.html": "e7c658cc"
+  },
+  "MRIQC.qmd": {
+    "MRIQC.html": "e1957679"
+  },
+  "fMRIPrep.qmd": {
+    "fMRIPrep.html": "84e3a758"
+  },
+  "fMRIPrep_visual_reports.qmd": {
+    "fMRIPrep_visual_reports.html": "8f6ba16c"
+  },
+  "IQMs_individual.qmd": {
+    "IQMs_individual.html": "ff6830cc"
+  },
+  "Preprocessing.qmd": {
+    "Preprocessing.html": "333d4195"
+  },
+  "code.qmd": {
+    "code.html": "5fca0484"
+  },
+  "multi_echo.qmd": {
+    "multi_echo.html": "68e3b8e0"
+  },
+  "Techincal_stuff_intro.qmd": {
+    "Techincal_stuff_intro.html": "ee5c4141"
+  },
+  "Technical_stuff_intro.qmd": {
+    "Technical_stuff_intro.html": "d66df488"
+  },
+  "Bids_conversion.qmd": {
+    "Bids_conversion.html": "542e7906"
+  }
+}

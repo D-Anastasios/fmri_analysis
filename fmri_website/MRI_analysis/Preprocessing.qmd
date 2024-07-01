@@ -1,0 +1,31 @@
+---
+title: "Preprocessing"
+author: "Anastasios Dadiotis"
+editor: visual
+toc: true
+format:
+  html:
+    code-tools: true
+    self-contained: true
+---
+
+```{r echo=FALSE}
+
+library(shiny)
+
+# Define the user interface for the app
+ui <- fluidPage(
+    textInput("name", "Enter Participant Name", ""),
+    verbatimTextOutput("code")
+)
+
+# Define server logic to process inputs and return outputs
+server <- function(input, output) {
+    output$code <- renderText({
+        paste("print('Participant name is', '", input$name, "')", sep="")
+    })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```

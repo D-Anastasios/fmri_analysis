@@ -1,4 +1,72 @@
 {
-    "sources": [],
+    "sources": [
+        {
+            "DOI": "10.3389/fnimg.2022.1073734",
+            "URL": "https://www.frontiersin.org/articles/10.3389/fnimg.2022.1073734",
+            "author": [
+                {
+                    "family": "Provins",
+                    "given": "Céline"
+                },
+                {
+                    "family": "MacNicol",
+                    "given": "Eilidh"
+                },
+                {
+                    "family": "Seeley",
+                    "given": "Saren H."
+                },
+                {
+                    "family": "Hagmann",
+                    "given": "Patric"
+                },
+                {
+                    "family": "Esteban",
+                    "given": "Oscar"
+                }
+            ],
+            "container-title": "Frontiers in Neuroimaging",
+            "id": "provins2023",
+            "issued": {
+                "date-parts": [
+                    [
+                        2023,
+                        1,
+                        12
+                    ]
+                ]
+            },
+            "language": "en-US",
+            "note": "Publisher: Frontiers",
+            "title": "Quality control in functional MRI studies with MRIQC and fMRIPrep",
+            "type": "article-journal",
+            "volume": "1"
+        },
+        {
+            "URL": "https://www.youtube.com/watch?v=In6Dez_uuxQ&t=559s&ab_channel=UABResearchComputing",
+            "id": "introduc",
+            "title": "Introduction to MRIQC [TRAIN-05-2022] - YouTube",
+            "type": ""
+        },
+        {
+            "URL": "https://www.youtube.com/watch?v=In6Dez_uuxQ&t=559s&ab_channel=UABResearchComputing",
+            "id": "introduc",
+            "title": "Introduction to MRIQC [TRAIN-05-2022] - YouTube",
+            "type": ""
+        },
+        {
+            "URL": "https://www.youtube.com/watch?v=In6Dez_uuxQ&t=559s&ab_channel=UABResearchComputing",
+            "id": "introduc",
+            "title": "Introduction to MRIQC [TRAIN-05-2022] - YouTube",
+            "type": ""
+        },
+        {
+            "URL": "https://andysbrainbook.readthedocs.io/en/latest/OpenScience/OS/fMRIPrep_Demo_3_ExaminingPreprocData.html",
+            "id": "fmriprep",
+            "title": "fMRIPrep tutorial #3: Examining the preprocessed data  andy’s brain book 1.0 documentation",
+            "title-short": "fMRIPrep tutorial #3",
+            "type": ""
+        }
+    ],
     "project_biblios": []
 }

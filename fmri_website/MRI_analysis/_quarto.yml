@@ -36,6 +36,8 @@ website:
       contents:
         - href: MRIQC.qmd
           text: MRIQC
+        - href: run_mriqc.qmd
+          text: Run MRIQC in CRNL cluster
         - href: MRIQC_BOLD.qmd
           text: BOLD visual reports
         - href: MRIQC_Anat.qmd
@@ -48,6 +50,8 @@ website:
       style: "floating"
       background: light
       contents:
+        - href: run_fmriprep.qmd
+          text: Run fmriprep in CRNL cluster
         - href: fMRIPrep.qmd
           text: fMRI preprocessing
         - href: fMRIPrep_visual_reports.qmd

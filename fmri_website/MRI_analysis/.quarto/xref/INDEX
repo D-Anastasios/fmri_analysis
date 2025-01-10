@@ -46,5 +46,14 @@
   },
   "Bids_conversion.qmd": {
     "Bids_conversion.html": "542e7906"
+  },
+  "about.qmd": {
+    "about.html": "e87f265c"
+  },
+  "run_mriqc.qmd": {
+    "run_mriqc.html": "8970da80"
+  },
+  "run_fmriprep.qmd": {
+    "run_fmriprep.html": "8d79887f"
   }
 }

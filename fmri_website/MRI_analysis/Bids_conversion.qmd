@@ -21,7 +21,7 @@ This document is a step-by-step guide on how to convert raw data from a study to
 
 In this preliminary step we setup and define our variables. Note from the code below, change the variable "subject" to the subject you are working on. The Tiger notation is C for controls and G for Gamblers, e.g. for the first control subject the notation is C01 and for the first gambler G01. The following procedure is to submit the job for one subject. (to be updated for more).
 
-```{.bash}
+``` bash
 # Standard variable for the Tiger study
 WD=/crnldata/psyr2/Anastasios/Tiger_fmri
 my_study=Tiger
@@ -35,7 +35,7 @@ subject=XXX
 
 By passing some path information and flags to HeuDiConv, you generate a heuristic (translation) file skeleton and some associated descriptor text files. These all get placed in a **hidden** directory, .heudiconv under the bids/derivatives directory.
 
-``` {.bash}
+``` bash
 cd ${WD}/${my_study}/code
 sbatch step1_heudiconv.sh ${subject} ${session_name} ${WD} ${my_study} 
 squeue
@@ -65,7 +65,7 @@ The rest should remain the shame. At the end of this page there is the the heuri
 
 Now that the heuristic.py file is ready we can run the HeuDiConv. Each time you run it, additional subdirectories are created under .heudiconv that record the details of each subject (and session) conversion. Detailed provenance information is retained in the .heudiconv hidden directory. The following code is to be run in the terminal.
 
-``` {.bash}
+``` bash
 cd ${WD}/${my_study}/code
 chmod -R 770 .
 sbatch step3_heudiconv.sh ${subject} ${session_name} ${WD} ${my_study}
@@ -74,13 +74,13 @@ squeue
 
 # Bids Validation
 
-After the conversion is done, it is important to validate the Bids format. This is done by using the [BIDS validator](https://bids-standard.github.io/bids-validator/). 
+After the conversion is done, it is important to validate the Bids format. This is done by using the [BIDS validator](https://bids-standard.github.io/bids-validator/).
 
 # Scripts
 
 ## step1_heudiconv.sh
 
-```{.bash filename="step1_heudiconv.sh" code-line-numbers="true" code-fold="true"}
+``` {.bash filename="step1_heudiconv.sh" code-line-numbers="true" code-fold="true"}
 #!/bin/bash
 
 ###############################
@@ -168,16 +168,16 @@ echo "#"
 #
 # Compose the command line
 cmd="srun singularity run \
-	--cleanenv \
-	-B ${DATA_DIRECTORY}:/base \
-	${HEUDICONV_SINGULARITY_IMG} \
-	-d /base/dicom/{subject}/{session}/scans/*/resources/DICOM/files/*.??? \
-	-s ${subject} \
-	--ses ${session_name} \
-	-f convertall \
-	-c none \
-	-o /base/bids/derivatives \
-	--overwrite"
+    --cleanenv \
+    -B ${DATA_DIRECTORY}:/base \
+    ${HEUDICONV_SINGULARITY_IMG} \
+    -d /base/dicom/{subject}/{session}/scans/*/resources/DICOM/files/*.??? \
+    -s ${subject} \
+    --ses ${session_name} \
+    -f convertall \
+    -c none \
+    -o /base/bids/derivatives \
+    --overwrite"
 #
 # Setup done, run the command
 echo Running task ${SLURM_ARRAY_TASK_ID}
@@ -207,12 +207,11 @@ echo "#"
 echo "sub-$subject  ${SLURM_ARRAY_TASK_ID} $exitcode" >> ${SLURM_JOB_NAME}.step1.${SLURM_ARRAY_JOB_ID}.tsv
 echo Finished tasks ${SLURM_ARRAY_TASK_ID} with exit code $exitcode
 exit $exitcode
-
 ```
 
 ## heuristic.py
 
-```{.python filename="heuristic.py" code-line-numbers="true" code-fold="true"}
+``` {.python filename="heuristic.py" code-line-numbers="true" code-fold="true"}
 from __future__ import annotations
 
 import logging
@@ -372,7 +371,7 @@ def infotodict(
 
 ## step3_heudiconv.sh
 
-```{.bash filename="step3_heudiconv.sh" code-line-numbers="true" code-fold="true"}
+``` {.bash filename="step3_heudiconv.sh" code-line-numbers="true" code-fold="true"}
 #!/bin/bash
 
 ###############################
@@ -465,17 +464,17 @@ echo "#"
 #
 # Compose the command line
 cmd="srun singularity run \
-	--cleanenv \
-	-B ${DATA_DIRECTORY}:/base -B ${STUDY}:/study \
-	${HEUDICONV_SINGULARITY_IMG} \
-	-d /base/dicom/{subject}/{session}/scans/*/resources/DICOM/files/*.??? \
-	-s ${subject} \
-	--ses ${session_name} \
-	-f /study/code/heuristic.py \
-	-c dcm2niix -b \
-	-o /base/bids \
-	--minmeta \
-	--overwrite"
+    --cleanenv \
+    -B ${DATA_DIRECTORY}:/base -B ${STUDY}:/study \
+    ${HEUDICONV_SINGULARITY_IMG} \
+    -d /base/dicom/{subject}/{session}/scans/*/resources/DICOM/files/*.??? \
+    -s ${subject} \
+    --ses ${session_name} \
+    -f /study/code/heuristic.py \
+    -c dcm2niix -b \
+    -o /base/bids \
+    --minmeta \
+    --overwrite"
 #
 # Setup done, run the command
 echo Running task ${SLURM_ARRAY_TASK_ID}
@@ -499,7 +498,7 @@ echo "Then, validate your nifti folder using online BIDS VALIDATOR: https://bids
 echo "############################################################################################"
 echo "#"
 # Output results to a table
-echo "sub-${subject}	${SLURM_ARRAY_TASK_ID}	$exitcode" >> ${SLURM_JOB_NAME}.step3.${SLURM_ARRAY_JOB_ID}.tsv
+echo "sub-${subject}    ${SLURM_ARRAY_TASK_ID}  $exitcode" >> ${SLURM_JOB_NAME}.step3.${SLURM_ARRAY_JOB_ID}.tsv
 echo Finished tasks ${SLURM_ARRAY_TASK_ID} with exit code $exitcode
 exit $exitcode
 ```

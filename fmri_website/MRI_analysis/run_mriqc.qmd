@@ -38,11 +38,18 @@ squeue
 
 ## For multiple participants
 
+
+
 ```bash
 cd ${WD}/${my_study}/code
 subject="not_any"   # use the participants.tsv to select subject 
+
+# Submit the job for all the participants
 sbatch --array=1-$(( $( wc -l ${WD}/${my_study}/data/bids/participants.tsv | cut -f1 -d' ' ) - 1 )) step4_mriqc_multiple.sh ${subject} ${session_name} ${WD} ${my_study}
 squeue
+
+# or specify the range of participants
+sbatch --array=1-3 step4_mriqc.sh ${subject} ${session_name} ${WD} ${my_study}
 ```
 
 # sync dir

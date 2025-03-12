@@ -9,8 +9,9 @@ format:
     self-contained: true
 ---
 
-# Intro 
-Preprocessing does not end with fmriprep. We need to do some additional preprocessing steps to prepare the data for the analysis. 
+# Intro
+
+Preprocessing does not end with fmriprep. We need to do some additional preprocessing steps to prepare the data for the analysis.
 
 ## Smoothing
 
@@ -104,4 +105,3 @@ done
 
 echo "Finished smoothing all images"
 ```
-

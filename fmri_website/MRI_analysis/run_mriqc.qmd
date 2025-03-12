@@ -9,12 +9,13 @@ format:
     self-contained: true
 ---
 
-# Set up 
+# Set up
+
 In this preliminary step we setup and define our variables. Note from the code below, change the variable “subject” to the subject you are working on. The Tiger notation is C for controls and G for Gamblers, e.g. for the first control subject the notation is C01 and for the first gambler G01. The following procedure is to submit the job for one subject. (to be updated for more).
 
 ``` bash
 # Standard variable for the Tiger study
-WD=/crnldata/psyr2/Anastasios/Tiger_fmri
+WD=/mnt/data/anastasios_d
 my_study=Tiger
 session_name=S01
 
@@ -33,22 +34,24 @@ sbatch step4_mriqc.sh ${subject} ${session_name} ${WD} ${my_study}
 squeue
 ```
 
+# sync dir
+
+After the job is finished, copy the updated bids directory (with the mriqc derivatives) to the crnldata directory so i can inspect the html files. For that i will use rsync istead of cp because it is faster and more efficient. The command is the following:
+
+``` bash
+rsync -av --progress /mnt/data/anastasios_d/Tiger/data/bids /crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/data/
+```
+
 # Notes and Errors
 
-I Run the job for the first time and i the job failed because it was out of memory. **(exit code 137).**
-I tried to increase the memory in the SBATCH directives in the step4_mriqc.sh file. I Tried with 100G. This did not work either
-Just for check i will run it for only the T1 images just to see what is going on. NOTE that the T1w are significantly smaller size that the bold. 
-If this does not work then there is definetely a problem. So this run correctly, i will now try for the bold to see if only the bold will be executed.
-Bold job was again killed due to memory issues. What i will do next is to reduce to  --nprocs 8 and --omp-nthreads 4 (This setup means MRIQC will not use more than 8 processes at a time, and each process will use up to 2 threads if multi-threading is supported by the task). NOTE: This might considerably slow down the job.
-Another solution would be to run MRIQC for each task seperetely as we did with T1w. **To be checked**
+I Run the job for the first time and i the job failed because it was out of memory. **(exit code 137).** I tried to increase the memory in the SBATCH directives in the step4_mriqc.sh file. I Tried with 100G. This did not work either Just for check i will run it for only the T1 images just to see what is going on. NOTE that the T1w are significantly smaller size that the bold. If this does not work then there is definetely a problem. So this run correctly, i will now try for the bold to see if only the bold will be executed. Bold job was again killed due to memory issues. What i will do next is to reduce to --nprocs 8 and --omp-nthreads 4 (This setup means MRIQC will not use more than 8 processes at a time, and each process will use up to 2 threads if multi-threading is supported by the task). NOTE: This might considerably slow down the job. Another solution would be to run MRIQC for each task seperetely as we did with T1w. **To be checked**
 
- - With these parameters above (--nprocs 8 and --omp-nthreads 4) it was executed succesfully. However, it took almost 2 hours for the bold images. It is worth trying submitting a unique job for each task in each modality as this could be faster. Another thing to try is play with the parameters. For instance, next we can try --nprocs 10 and --omp-nthreads 6 and if this works then double the original parameters
- 
- 
+-   With these parameters above (--nprocs 8 and --omp-nthreads 4) it was executed succesfully. However, it took almost 2 hours for the bold images. It is worth trying submitting a unique job for each task in each modality as this could be faster. Another thing to try is play with the parameters. For instance, next we can try --nprocs 10 and --omp-nthreads 6 and if this works then double the original parameters
+
 # Scripts
- 
- ``` {.bash filename="step4_mriqc.sh" code-line-numbers="true" code-fold="true"}
- #!/bin/bash
+
+``` {.bash filename="step4_mriqc.sh" code-line-numbers="true" code-fold="true"}
+#!/bin/bash
 
 ###############################
 ### from https://bircibrain.github.io/computingguide/docs/fmri-preprocessing/mriqc.html#singularitystorrs-hpc
@@ -145,20 +148,20 @@ echo "#"
 
 
 cmd="srun singularity run \
-	--cleanenv \
-	--bind ${STUDY}:/base --bind ${DATA_DIRECTORY}:/data --bind ${OUTPUT_DIRECTORY}:/out \
-	${MRIQC_SINGULARITY_IMG} \
-	/data/bids /out/derivatives/mriqc participant \
-	--participant-label ${subject} \
-	--modalities bold \
-	--work-dir /base/code/logs/mriqc_intermediate_results_${subject} \
-	--mem 96 \
-    --nprocs 8 \
-    --omp-nthreads 4 \
-	--profile \
-	--verbose-reports \
-	--write-graph \
-	--fft-spikes-detector"
+   --cleanenv \
+   --bind ${STUDY}:/base --bind ${DATA_DIRECTORY}:/data --bind ${OUTPUT_DIRECTORY}:/out \
+   ${MRIQC_SINGULARITY_IMG} \
+   /data/bids /out/derivatives/mriqc participant \
+   --participant-label ${subject} \
+   --modalities bold \
+   --work-dir /base/code/logs/mriqc_intermediate_results_${subject} \
+   --mem 96 \
+   --nprocs 8 \
+   --omp-nthreads 4 \
+   --profile \
+   --verbose-reports \
+   --write-graph \
+   --fft-spikes-detector"
 
 # Setup done, run the command
 echo "Command line used (example of the last subject processed)"
@@ -179,7 +182,7 @@ echo "folders have been created & look at all reports created."
 echo "############################################################################################"
 echo "#"
 # Output results to a table
-echo "sub-${subject}	${SLURM_ARRAY_TASK_ID}	$exitcode" >> ${SLURM_JOB_NAME}.step4.${SLURM_ARRAY_JOB_ID}.tsv
+echo "sub-${subject}    ${SLURM_ARRAY_TASK_ID}  $exitcode" >> ${SLURM_JOB_NAME}.step4.${SLURM_ARRAY_JOB_ID}.tsv
 echo Finished tasks ${SLURM_ARRAY_TASK_ID} with exit code $exitcode
 exit $exitcode
 ```

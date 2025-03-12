@@ -23,7 +23,7 @@ In this preliminary step we setup and define our variables. Note from the code b
 
 ``` bash
 # Standard variable for the Tiger study
-WD=/crnldata/psyr2/Anastasios/Tiger_fmri
+WD=/mnt/data/anastasios_d
 my_study=Tiger
 session_name=S01
 
@@ -41,25 +41,25 @@ sbatch step1_heudiconv.sh ${subject} ${session_name} ${WD} ${my_study}
 squeue
 ```
 
-To check that it worked the out_step1\_\*.log file should have finished with exit code 0. Also, go to the /crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/data/bids/derivatives/.heudiconv/{subject}/info were 5 files should be created.
+To check that it worked the **out_step1\_{jobnumber}.log** file should have finished with **exit code 0**. Also, go to the /mnt/data/anastasios/Tiger/data/bids/derivatives/.heudiconv/{subject}/info were 5 files should be created.
 
-Note that this is a **hidden** directory. To see it you need to type `ls -a` in the terminal. The file that we need for the next step is the dicominfo.tsv file.
-
-This step takes around 15 to 20 minutes to finish.
+Note that this is a **hidden** directory. To see it you need to type `ls -a` in the terminal. The file that we need for the next step is the **dicominfo.tsv file**.
 
 ## [Step 2](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html#heudiconv-step2): Modify the heuristic.py file
 
 You will modify the heuristic.py to specify BIDS output names and directories, and the input DICOM characteristics. Available input DICOM characteristics are listed in /.heudiconv/info/dicominfo.tsv.
 
-Check the template of the heuristic.py file specifically for the Tiger study in the following path: /crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/code/heuristic.py. This is the one you should modify based on the dicominfo.tsv file of the specific subject.
+Check the template of the heuristic.py file specifically for the Tiger study in the following path: /crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/code/heuristic_template_Tiger.py. This is the one you should modify based on the dicominfo.tsv file of the specific subject.
 
-The template is almost ready. What you should modify are the following lines:
+The template is almost ready. What you should modify/check are the following lines:
 
-1.  Line 119 s.dim == XXXX
-2.  Line 123 s.dim == XXXX
-3.  Line 127 s.dim == XXXX
+1.  Line 122 s.dim4 == XXXX \# of volumes for the hariri task
+2.  Line 128 s.dim == XXXX \# of volumes for the BigBuckBunny task
+3.  Line 134 s.dim == XXXX \# of volumes for the PartlyCloudy task
 
-The rest should remain the shame. At the end of this page there is the the heuristic.py file for inspection if nececarry.
+The rest should remain the shame. But do check the following: 4. For the gambling task check that for each run \# of volumes \>0 5. For Fieldmaps check that the that the series_id has the correct number in it. (e.g. "9-gre_field_mapping" should map to the gambling task - adhust accordingly) 6. Diffusion should be ok as is. But do check AP - PA are in order/
+
+At the end of this page there is the the heuristic.py file for inspection if nececarry.
 
 ## [Step 3](https://neuroimaging-core-docs.readthedocs.io/en/latest/pages/heudiconv.html#heudiconv-step3): Run HeuDiConv
 

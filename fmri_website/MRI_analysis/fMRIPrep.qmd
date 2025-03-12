@@ -22,7 +22,7 @@ Based on:
 ToDO:
 
 -   [ ] Check the [pdf](https://bpb-us-e1.wpmucdn.com/websites.harvard.edu/dist/f/49/files/2022/09/CBS_MRI_Qualitative_Qualitity_Control_Manual.pdf) that Gaëlle sent me named "Train your eyes" Alhtough, this is a resource generally for artifacts in structural and functional MRI data and not specifically for fMRIPrep, it might be useful to check it out to build some intuition on what to look for in the [**raw**]{.underline} data.
--   [ ] 
+-   \[ \]
 
 # Artifacts in functional and structural MRI
 

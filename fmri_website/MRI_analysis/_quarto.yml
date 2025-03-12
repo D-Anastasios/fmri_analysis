@@ -18,10 +18,12 @@ website:
     left:
       - href: index.qmd
         text: Overview
+      - href: Bids_conversion.qmd
+        text: BIDS 
       - href: MRIQC.qmd
         text: MRIQC
       - href: fMRIPrep.qmd
-        text: fMRIPrep
+        text: fmriPrep
       - href: code.qmd
         text: Analyses
       - href: Technical_stuff_intro.qmd
@@ -29,6 +31,15 @@ website:
     
 
   sidebar:
+    - id: BIDS
+    - title: "Bids conversion"
+      style: "floating"
+      background: light
+      contents:
+        - href: Bids_conversion.qmd
+          text: Bids conversion
+  
+  
     - id: MRIQC
     - title: "MRIQC"
       style: "floating"
@@ -64,8 +75,6 @@ website:
       contents:
         - href: code.qmd
           text: Analyses overview
-        - href: Bids_conversion.qmd
-          text: BIDS conversion
         - href: Preprocessing.qmd
           text: Preprocessing
       

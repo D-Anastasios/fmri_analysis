@@ -4768,12 +4768,16 @@ vertical-align: -.125em;
 <span class="menu-text">Overview</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./Bids_conversion.html"> 
+<span class="menu-text">BIDS</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link active" href="./MRIQC.html" aria-current="page"> 
 <span class="menu-text">MRIQC</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./fMRIPrep.html"> 
-<span class="menu-text">fMRIPrep</span></a>
+<span class="menu-text">fmriPrep</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./code.html"> 
@@ -4848,6 +4852,7 @@ vertical-align: -.125em;
   <ul>
   <li><a href="#set-up" id="toc-set-up" class="nav-link active" data-scroll-target="#set-up">Set up</a></li>
   <li><a href="#submit-the-job" id="toc-submit-the-job" class="nav-link" data-scroll-target="#submit-the-job">Submit the job</a></li>
+  <li><a href="#sync-dir" id="toc-sync-dir" class="nav-link" data-scroll-target="#sync-dir">sync dir</a></li>
   <li><a href="#notes-and-errors" id="toc-notes-and-errors" class="nav-link" data-scroll-target="#notes-and-errors">Notes and Errors</a></li>
   <li><a href="#scripts" id="toc-scripts" class="nav-link" data-scroll-target="#scripts">Scripts</a></li>
   </ul>
@@ -4885,7 +4890,7 @@ vertical-align: -.125em;
 <h1>Set up</h1>
 <p>In this preliminary step we setup and define our variables. Note from the code below, change the variable “subject” to the subject you are working on. The Tiger notation is C for controls and G for Gamblers, e.g. for the first control subject the notation is C01 and for the first gambler G01. The following procedure is to submit the job for one subject. (to be updated for more).</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard variable for the Tiger study</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">WD</span><span class="op">=</span>/crnldata/psyr2/Anastasios/Tiger_fmri</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">WD</span><span class="op">=</span>/mnt/data/anastasios_d</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">my_study</span><span class="op">=</span>Tiger</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="va">session_name</span><span class="op">=</span>S01</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
@@ -4900,6 +4905,11 @@ vertical-align: -.125em;
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> step4_mriqc.sh <span class="va">${subject}</span> <span class="va">${session_name}</span> <span class="va">${WD}</span> <span class="va">${my_study}</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ex">squeue</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
+<section id="sync-dir" class="level1">
+<h1>sync dir</h1>
+<p>After the job is finished, copy the updated bids directory (with the mriqc derivatives) to the crnldata directory so i can inspect the html files. For that i will use rsync istead of cp because it is faster and more efficient. The command is the following:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rsync</span> <span class="at">-av</span> <span class="at">--progress</span> /mnt/data/anastasios_d/Tiger/data/bids /crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/data/</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
 <section id="notes-and-errors" class="level1">
 <h1>Notes and Errors</h1>
 <p>I Run the job for the first time and i the job failed because it was out of memory. <strong>(exit code 137).</strong> I tried to increase the memory in the SBATCH directives in the step4_mriqc.sh file. I Tried with 100G. This did not work either Just for check i will run it for only the T1 images just to see what is going on. NOTE that the T1w are significantly smaller size that the bold. If this does not work then there is definetely a problem. So this run correctly, i will now try for the bold to see if only the bold will be executed. Bold job was again killed due to memory issues. What i will do next is to reduce to –nprocs 8 and –omp-nthreads 4 (This setup means MRIQC will not use more than 8 processes at a time, and each process will use up to 2 threads if multi-threading is supported by the task). NOTE: This might considerably slow down the job. Another solution would be to run MRIQC for each task seperetely as we did with T1w. <strong>To be checked</strong></p>
@@ -4913,140 +4923,140 @@ vertical-align: -.125em;
 <div class="code-with-filename-file">
 <pre><strong>step4_mriqc.sh</strong></pre>
 </div>
-<div class="sourceCode" id="cb3" data-filename="step4_mriqc.sh" data-code-fold="true"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1"></a><span class="co">#!/bin/bash</span></span>
-<span id="cb3-2"><a href="#cb3-2"></a></span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="co">###############################</span></span>
-<span id="cb3-4"><a href="#cb3-4"></a><span class="co">### from https://bircibrain.github.io/computingguide/docs/fmri-preprocessing/mriqc.html#singularitystorrs-hpc</span></span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="co">### </span></span>
-<span id="cb3-6"><a href="#cb3-6"></a><span class="co">### Adapted for the CRNL </span></span>
-<span id="cb3-7"><a href="#cb3-7"></a><span class="co">### by Gaelle Leroux, PhD</span></span>
-<span id="cb3-8"><a href="#cb3-8"></a><span class="co">### and Isabelle Faillenot, PhD</span></span>
-<span id="cb3-9"><a href="#cb3-9"></a><span class="co">###</span></span>
-<span id="cb3-10"><a href="#cb3-10"></a><span class="co">### Fall 2020, Lyon</span></span>
-<span id="cb3-11"><a href="#cb3-11"></a><span class="co">### gaelle.leroux @ cnrs.fr</span></span>
-<span id="cb3-12"><a href="#cb3-12"></a><span class="co">###</span></span>
-<span id="cb3-13"><a href="#cb3-13"></a><span class="co">### launched by: sbatch step4_mriqc.sh ${subject} ${session_name} ${WD} ${my_study}</span></span>
-<span id="cb3-14"><a href="#cb3-14"></a><span class="co">###</span></span>
-<span id="cb3-15"><a href="#cb3-15"></a><span class="co">###############################</span></span>
-<span id="cb3-16"><a href="#cb3-16"></a><span class="co">#</span></span>
-<span id="cb3-17"><a href="#cb3-17"></a><span class="co">### The SBATCH directives for a sequential (email line 37 to be revised only):</span></span>
-<span id="cb3-18"><a href="#cb3-18"></a></span>
-<span id="cb3-19"><a href="#cb3-19"></a><span class="co">### Your job name displayed by the queue</span></span>
-<span id="cb3-20"><a href="#cb3-20"></a><span class="co">### use &quot;squeue&quot; command in a terminal to see it</span></span>
-<span id="cb3-21"><a href="#cb3-21"></a><span class="co">#SBATCH --job-name=mriQC</span></span>
-<span id="cb3-22"><a href="#cb3-22"></a></span>
-<span id="cb3-23"><a href="#cb3-23"></a><span class="co">### Specify output and error files</span></span>
-<span id="cb3-24"><a href="#cb3-24"></a><span class="co">### %A for job array&#39;s master job allocation number</span></span>
-<span id="cb3-25"><a href="#cb3-25"></a><span class="co">### or %a for job array ID (index) number</span></span>
-<span id="cb3-26"><a href="#cb3-26"></a><span class="co">#SBATCH --output=out_mriQC_%A.log</span></span>
-<span id="cb3-27"><a href="#cb3-27"></a><span class="co">#SBATCH --error=err_mriQC_%A.log</span></span>
-<span id="cb3-28"><a href="#cb3-28"></a></span>
-<span id="cb3-29"><a href="#cb3-29"></a><span class="co">### Specify the number of tasks, CPU per task and buffer size to be used</span></span>
-<span id="cb3-30"><a href="#cb3-30"></a><span class="co">#SBATCH --nodes=1</span></span>
-<span id="cb3-31"><a href="#cb3-31"></a><span class="co">#SBATCH --ntasks=1</span></span>
-<span id="cb3-32"><a href="#cb3-32"></a><span class="co">#SBATCH --cpus-per-task=4</span></span>
-<span id="cb3-33"><a href="#cb3-33"></a><span class="co">#SBATCH --mem=100G</span></span>
-<span id="cb3-34"><a href="#cb3-34"></a></span>
-<span id="cb3-35"><a href="#cb3-35"></a></span>
-<span id="cb3-36"><a href="#cb3-36"></a><span class="co">### Send email for which step: NONE, </span><span class="re">BEGIN</span><span class="co">, </span><span class="re">END</span><span class="co">, FAIL, REQUEUE, ALL</span></span>
-<span id="cb3-37"><a href="#cb3-37"></a><span class="co">#SBATCH --mail-type=ALL</span></span>
-<span id="cb3-38"><a href="#cb3-38"></a><span class="co">#SBATCH --mail-user=${firstName}.${lastName}@univ-lyon1.fr</span></span>
-<span id="cb3-39"><a href="#cb3-39"></a></span>
-<span id="cb3-40"><a href="#cb3-40"></a><span class="co">### The size of the participant table to be run</span></span>
-<span id="cb3-41"><a href="#cb3-41"></a><span class="co">###SBATCH --array=1-1</span></span>
-<span id="cb3-42"><a href="#cb3-42"></a></span>
-<span id="cb3-43"><a href="#cb3-43"></a><span class="co">### If you want to launch your script on a specific node of the cluser</span></span>
-<span id="cb3-44"><a href="#cb3-44"></a><span class="co">### If yes, uncomment the appropirate line(s) </span></span>
-<span id="cb3-45"><a href="#cb3-45"></a><span class="co">###SBATCH --nodelist=node9</span></span>
-<span id="cb3-46"><a href="#cb3-46"></a><span class="co">#SBATCH --exclude=node9</span></span>
-<span id="cb3-47"><a href="#cb3-47"></a><span class="co">###SBATCH --exclude=node[9-10]</span></span>
-<span id="cb3-48"><a href="#cb3-48"></a></span>
-<span id="cb3-49"><a href="#cb3-49"></a><span class="co"># End of the SBATCH directives</span></span>
-<span id="cb3-50"><a href="#cb3-50"></a><span class="co">###############################</span></span>
-<span id="cb3-51"><a href="#cb3-51"></a><span class="co">#</span></span>
-<span id="cb3-52"><a href="#cb3-52"></a><span class="co"># Paths of the study</span></span>
-<span id="cb3-53"><a href="#cb3-53"></a><span class="va">subject</span><span class="op">=</span><span class="va">$1</span></span>
-<span id="cb3-54"><a href="#cb3-54"></a><span class="va">session_name</span><span class="op">=</span><span class="va">$2</span></span>
-<span id="cb3-55"><a href="#cb3-55"></a><span class="va">WD</span><span class="op">=</span><span class="va">$3</span></span>
-<span id="cb3-56"><a href="#cb3-56"></a><span class="va">my_study</span><span class="op">=</span><span class="va">$4</span></span>
-<span id="cb3-57"><a href="#cb3-57"></a><span class="va">STUDY</span><span class="op">=</span><span class="va">${WD}</span>/<span class="va">${my_study}</span></span>
-<span id="cb3-58"><a href="#cb3-58"></a><span class="va">DATA_DIRECTORY</span><span class="op">=</span><span class="va">${STUDY}</span><span class="st">&quot;/data&quot;</span></span>
-<span id="cb3-59"><a href="#cb3-59"></a><span class="va">OUTPUT_DIRECTORY</span><span class="op">=</span><span class="va">${DATA_DIRECTORY}</span><span class="st">&quot;/bids&quot;</span></span>
-<span id="cb3-60"><a href="#cb3-60"></a><span class="co">#</span></span>
-<span id="cb3-61"><a href="#cb3-61"></a><span class="va">MRIQC_SINGULARITY_IMG</span><span class="op">=</span><span class="st">&quot;/mnt/data/soft/Images/mriqc_23.1.0.sif&quot;</span></span>
-<span id="cb3-62"><a href="#cb3-62"></a><span class="co">#</span></span>
-<span id="cb3-63"><a href="#cb3-63"></a><span class="co">## Comment: Parse the participants.tsv file and extract one subject ID from the line corresponding to this SLURM task.</span></span>
-<span id="cb3-64"><a href="#cb3-64"></a><span class="co">## Comment: 1 line below to uncomment if you want to launch the script for all the subjects listed in ${DATA_DIRECTORY}/participants.tsv</span></span>
-<span id="cb3-65"><a href="#cb3-65"></a><span class="co">#subject=$( sed -n -E &quot;$((${SLURM_ARRAY_TASK_ID} + 1))s/sub-(\S*)\&gt;.*/\1/gp&quot; ${DATA_DIRECTORY}/participants.tsv )</span></span>
-<span id="cb3-66"><a href="#cb3-66"></a><span class="co">#</span></span>
-<span id="cb3-67"><a href="#cb3-67"></a><span class="co">###############################</span></span>
-<span id="cb3-68"><a href="#cb3-68"></a><span class="co">#</span></span>
-<span id="cb3-69"><a href="#cb3-69"></a><span class="co"># To be printed in the out_mriQC_*.log file :</span></span>
-<span id="cb3-70"><a href="#cb3-70"></a><span class="bu">echo</span> <span class="st">&quot;#########################################################################&quot;</span></span>
-<span id="cb3-71"><a href="#cb3-71"></a><span class="bu">echo</span> <span class="st">&quot;USER:&quot;</span> <span class="va">$USER</span></span>
-<span id="cb3-72"><a href="#cb3-72"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-73"><a href="#cb3-73"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_SUBMITING_DIRECTORY:&quot;</span> <span class="va">$SLURM_SUBMIT_DIR</span></span>
-<span id="cb3-74"><a href="#cb3-74"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_JOB_NODELIST:&quot;</span> <span class="va">$SLURM_NODELIST</span></span>
-<span id="cb3-75"><a href="#cb3-75"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_JOB_NAME:&quot;</span> <span class="va">$SLURM_JOB_NAME</span></span>
-<span id="cb3-76"><a href="#cb3-76"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_JOB_ID:&quot;</span> <span class="va">$SLURM_JOBID</span></span>
-<span id="cb3-77"><a href="#cb3-77"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_ARRAY_TASK_ID:&quot;</span> <span class="va">$SLURM_ARRAY_TASK_ID</span></span>
-<span id="cb3-78"><a href="#cb3-78"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_NTASKS:&quot;</span> <span class="va">$SLURM_NTASKS</span></span>
-<span id="cb3-79"><a href="#cb3-79"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-80"><a href="#cb3-80"></a><span class="bu">echo</span> <span class="st">&quot;Step 4: Control of the quality of images using mriQC BIDSapp&quot;</span></span>
-<span id="cb3-81"><a href="#cb3-81"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-82"><a href="#cb3-82"></a><span class="bu">echo</span> <span class="st">&quot;Subject:&quot;</span> <span class="va">${subject}</span></span>
-<span id="cb3-83"><a href="#cb3-83"></a><span class="bu">echo</span> <span class="st">&quot;Session:&quot;</span> <span class="va">${session_name}</span></span>
-<span id="cb3-84"><a href="#cb3-84"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-85"><a href="#cb3-85"></a><span class="bu">echo</span> <span class="st">&quot;Job STARTED @ </span><span class="va">$(</span><span class="fu">date</span><span class="va">)</span><span class="st">&quot;</span></span>
-<span id="cb3-86"><a href="#cb3-86"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-87"><a href="#cb3-87"></a><span class="co">#</span></span>
-<span id="cb3-88"><a href="#cb3-88"></a><span class="co"># PREREQUISITE: a dataset organised according to BIDS standards.</span></span>
-<span id="cb3-89"><a href="#cb3-89"></a><span class="co"># NOW: submission to slurm workload manager and run a singularity image for mriQC </span></span>
-<span id="cb3-90"><a href="#cb3-90"></a><span class="co">#</span></span>
-<span id="cb3-91"><a href="#cb3-91"></a><span class="co"># Compose the command line</span></span>
-<span id="cb3-92"><a href="#cb3-92"></a><span class="co">#</span></span>
-<span id="cb3-93"><a href="#cb3-93"></a><span class="co"># Note that this is only for one modality for a check! REMEMBER to change it afterwards to run all modalities</span></span>
-<span id="cb3-94"><a href="#cb3-94"></a><span class="co">######## PLAYING WITH THE --nprocs and --omp-nthreads 4 to find the sweet spot remember to change that</span></span>
-<span id="cb3-95"><a href="#cb3-95"></a></span>
-<span id="cb3-96"><a href="#cb3-96"></a></span>
-<span id="cb3-97"><a href="#cb3-97"></a><span class="va">cmd</span><span class="op">=</span><span class="st">&quot;srun singularity run </span><span class="dt">\</span></span>
-<span id="cb3-98"><a href="#cb3-98"></a><span class="st">   --cleanenv </span><span class="dt">\</span></span>
-<span id="cb3-99"><a href="#cb3-99"></a><span class="st">   --bind </span><span class="va">${STUDY}</span><span class="st">:/base --bind </span><span class="va">${DATA_DIRECTORY}</span><span class="st">:/data --bind </span><span class="va">${OUTPUT_DIRECTORY}</span><span class="st">:/out </span><span class="dt">\</span></span>
-<span id="cb3-100"><a href="#cb3-100"></a><span class="st">   </span><span class="va">${MRIQC_SINGULARITY_IMG}</span><span class="st"> </span><span class="dt">\</span></span>
-<span id="cb3-101"><a href="#cb3-101"></a><span class="st">   /data/bids /out/derivatives/mriqc participant </span><span class="dt">\</span></span>
-<span id="cb3-102"><a href="#cb3-102"></a><span class="st">   --participant-label </span><span class="va">${subject}</span><span class="st"> </span><span class="dt">\</span></span>
-<span id="cb3-103"><a href="#cb3-103"></a><span class="st">   --modalities bold </span><span class="dt">\</span></span>
-<span id="cb3-104"><a href="#cb3-104"></a><span class="st">   --work-dir /base/code/logs/mriqc_intermediate_results_</span><span class="va">${subject}</span><span class="st"> </span><span class="dt">\</span></span>
-<span id="cb3-105"><a href="#cb3-105"></a><span class="st">   --mem 96 </span><span class="dt">\</span></span>
-<span id="cb3-106"><a href="#cb3-106"></a><span class="st">   --nprocs 8 </span><span class="dt">\</span></span>
-<span id="cb3-107"><a href="#cb3-107"></a><span class="st">   --omp-nthreads 4 </span><span class="dt">\</span></span>
-<span id="cb3-108"><a href="#cb3-108"></a><span class="st">   --profile </span><span class="dt">\</span></span>
-<span id="cb3-109"><a href="#cb3-109"></a><span class="st">   --verbose-reports </span><span class="dt">\</span></span>
-<span id="cb3-110"><a href="#cb3-110"></a><span class="st">   --write-graph </span><span class="dt">\</span></span>
-<span id="cb3-111"><a href="#cb3-111"></a><span class="st">   --fft-spikes-detector&quot;</span></span>
-<span id="cb3-112"><a href="#cb3-112"></a></span>
-<span id="cb3-113"><a href="#cb3-113"></a><span class="co"># Setup done, run the command</span></span>
-<span id="cb3-114"><a href="#cb3-114"></a><span class="bu">echo</span> <span class="st">&quot;Command line used (example of the last subject processed)&quot;</span></span>
-<span id="cb3-115"><a href="#cb3-115"></a><span class="bu">echo</span> <span class="va">$cmd</span></span>
-<span id="cb3-116"><a href="#cb3-116"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-117"><a href="#cb3-117"></a><span class="co">#</span></span>
-<span id="cb3-118"><a href="#cb3-118"></a><span class="bu">eval</span> <span class="va">$cmd</span></span>
-<span id="cb3-119"><a href="#cb3-119"></a><span class="va">exitcode</span><span class="op">=</span><span class="va">$?</span></span>
-<span id="cb3-120"><a href="#cb3-120"></a><span class="co">#</span></span>
-<span id="cb3-121"><a href="#cb3-121"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-122"><a href="#cb3-122"></a><span class="bu">echo</span> <span class="st">&quot;Job STOPPED @ </span><span class="va">$(</span><span class="fu">date</span><span class="va">)</span><span class="st">&quot;</span></span>
-<span id="cb3-123"><a href="#cb3-123"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-124"><a href="#cb3-124"></a><span class="bu">echo</span> <span class="st">&quot;If MRIQC successful, the last end of the out*.log file is:&quot;</span></span>
-<span id="cb3-125"><a href="#cb3-125"></a><span class="bu">echo</span> <span class="st">&quot;&lt;Participant level finished successfully&gt; Otherwise, a problem occured.&quot;</span></span>
-<span id="cb3-126"><a href="#cb3-126"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-127"><a href="#cb3-127"></a><span class="bu">echo</span> <span class="st">&quot;Check that &quot;</span><span class="va">$OUTPUT_DIRECTORY</span><span class="st">&quot;/derivatives/mriqc and mriqc_working_directory&quot;</span></span>
-<span id="cb3-128"><a href="#cb3-128"></a><span class="bu">echo</span> <span class="st">&quot;folders have been created &amp; look at all reports created.&quot;</span></span>
-<span id="cb3-129"><a href="#cb3-129"></a><span class="bu">echo</span> <span class="st">&quot;############################################################################################&quot;</span></span>
-<span id="cb3-130"><a href="#cb3-130"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
-<span id="cb3-131"><a href="#cb3-131"></a><span class="co"># Output results to a table</span></span>
-<span id="cb3-132"><a href="#cb3-132"></a><span class="bu">echo</span> <span class="st">&quot;sub-</span><span class="va">${subject}</span><span class="st">    </span><span class="va">${SLURM_ARRAY_TASK_ID}</span><span class="st">  </span><span class="va">$exitcode</span><span class="st">&quot;</span> <span class="op">&gt;&gt;</span> <span class="va">${SLURM_JOB_NAME}</span>.step4.<span class="va">${SLURM_ARRAY_JOB_ID}</span>.tsv</span>
-<span id="cb3-133"><a href="#cb3-133"></a><span class="bu">echo</span> Finished tasks <span class="va">${SLURM_ARRAY_TASK_ID}</span> with exit code <span class="va">$exitcode</span></span>
-<span id="cb3-134"><a href="#cb3-134"></a><span class="bu">exit</span> <span class="va">$exitcode</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb4" data-filename="step4_mriqc.sh" data-code-fold="true"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a></span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="co">###############################</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a><span class="co">### from https://bircibrain.github.io/computingguide/docs/fmri-preprocessing/mriqc.html#singularitystorrs-hpc</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="co">### </span></span>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="co">### Adapted for the CRNL </span></span>
+<span id="cb4-7"><a href="#cb4-7"></a><span class="co">### by Gaelle Leroux, PhD</span></span>
+<span id="cb4-8"><a href="#cb4-8"></a><span class="co">### and Isabelle Faillenot, PhD</span></span>
+<span id="cb4-9"><a href="#cb4-9"></a><span class="co">###</span></span>
+<span id="cb4-10"><a href="#cb4-10"></a><span class="co">### Fall 2020, Lyon</span></span>
+<span id="cb4-11"><a href="#cb4-11"></a><span class="co">### gaelle.leroux @ cnrs.fr</span></span>
+<span id="cb4-12"><a href="#cb4-12"></a><span class="co">###</span></span>
+<span id="cb4-13"><a href="#cb4-13"></a><span class="co">### launched by: sbatch step4_mriqc.sh ${subject} ${session_name} ${WD} ${my_study}</span></span>
+<span id="cb4-14"><a href="#cb4-14"></a><span class="co">###</span></span>
+<span id="cb4-15"><a href="#cb4-15"></a><span class="co">###############################</span></span>
+<span id="cb4-16"><a href="#cb4-16"></a><span class="co">#</span></span>
+<span id="cb4-17"><a href="#cb4-17"></a><span class="co">### The SBATCH directives for a sequential (email line 37 to be revised only):</span></span>
+<span id="cb4-18"><a href="#cb4-18"></a></span>
+<span id="cb4-19"><a href="#cb4-19"></a><span class="co">### Your job name displayed by the queue</span></span>
+<span id="cb4-20"><a href="#cb4-20"></a><span class="co">### use &quot;squeue&quot; command in a terminal to see it</span></span>
+<span id="cb4-21"><a href="#cb4-21"></a><span class="co">#SBATCH --job-name=mriQC</span></span>
+<span id="cb4-22"><a href="#cb4-22"></a></span>
+<span id="cb4-23"><a href="#cb4-23"></a><span class="co">### Specify output and error files</span></span>
+<span id="cb4-24"><a href="#cb4-24"></a><span class="co">### %A for job array&#39;s master job allocation number</span></span>
+<span id="cb4-25"><a href="#cb4-25"></a><span class="co">### or %a for job array ID (index) number</span></span>
+<span id="cb4-26"><a href="#cb4-26"></a><span class="co">#SBATCH --output=out_mriQC_%A.log</span></span>
+<span id="cb4-27"><a href="#cb4-27"></a><span class="co">#SBATCH --error=err_mriQC_%A.log</span></span>
+<span id="cb4-28"><a href="#cb4-28"></a></span>
+<span id="cb4-29"><a href="#cb4-29"></a><span class="co">### Specify the number of tasks, CPU per task and buffer size to be used</span></span>
+<span id="cb4-30"><a href="#cb4-30"></a><span class="co">#SBATCH --nodes=1</span></span>
+<span id="cb4-31"><a href="#cb4-31"></a><span class="co">#SBATCH --ntasks=1</span></span>
+<span id="cb4-32"><a href="#cb4-32"></a><span class="co">#SBATCH --cpus-per-task=4</span></span>
+<span id="cb4-33"><a href="#cb4-33"></a><span class="co">#SBATCH --mem=100G</span></span>
+<span id="cb4-34"><a href="#cb4-34"></a></span>
+<span id="cb4-35"><a href="#cb4-35"></a></span>
+<span id="cb4-36"><a href="#cb4-36"></a><span class="co">### Send email for which step: NONE, </span><span class="re">BEGIN</span><span class="co">, </span><span class="re">END</span><span class="co">, FAIL, REQUEUE, ALL</span></span>
+<span id="cb4-37"><a href="#cb4-37"></a><span class="co">#SBATCH --mail-type=ALL</span></span>
+<span id="cb4-38"><a href="#cb4-38"></a><span class="co">#SBATCH --mail-user=${firstName}.${lastName}@univ-lyon1.fr</span></span>
+<span id="cb4-39"><a href="#cb4-39"></a></span>
+<span id="cb4-40"><a href="#cb4-40"></a><span class="co">### The size of the participant table to be run</span></span>
+<span id="cb4-41"><a href="#cb4-41"></a><span class="co">###SBATCH --array=1-1</span></span>
+<span id="cb4-42"><a href="#cb4-42"></a></span>
+<span id="cb4-43"><a href="#cb4-43"></a><span class="co">### If you want to launch your script on a specific node of the cluser</span></span>
+<span id="cb4-44"><a href="#cb4-44"></a><span class="co">### If yes, uncomment the appropirate line(s) </span></span>
+<span id="cb4-45"><a href="#cb4-45"></a><span class="co">###SBATCH --nodelist=node9</span></span>
+<span id="cb4-46"><a href="#cb4-46"></a><span class="co">#SBATCH --exclude=node9</span></span>
+<span id="cb4-47"><a href="#cb4-47"></a><span class="co">###SBATCH --exclude=node[9-10]</span></span>
+<span id="cb4-48"><a href="#cb4-48"></a></span>
+<span id="cb4-49"><a href="#cb4-49"></a><span class="co"># End of the SBATCH directives</span></span>
+<span id="cb4-50"><a href="#cb4-50"></a><span class="co">###############################</span></span>
+<span id="cb4-51"><a href="#cb4-51"></a><span class="co">#</span></span>
+<span id="cb4-52"><a href="#cb4-52"></a><span class="co"># Paths of the study</span></span>
+<span id="cb4-53"><a href="#cb4-53"></a><span class="va">subject</span><span class="op">=</span><span class="va">$1</span></span>
+<span id="cb4-54"><a href="#cb4-54"></a><span class="va">session_name</span><span class="op">=</span><span class="va">$2</span></span>
+<span id="cb4-55"><a href="#cb4-55"></a><span class="va">WD</span><span class="op">=</span><span class="va">$3</span></span>
+<span id="cb4-56"><a href="#cb4-56"></a><span class="va">my_study</span><span class="op">=</span><span class="va">$4</span></span>
+<span id="cb4-57"><a href="#cb4-57"></a><span class="va">STUDY</span><span class="op">=</span><span class="va">${WD}</span>/<span class="va">${my_study}</span></span>
+<span id="cb4-58"><a href="#cb4-58"></a><span class="va">DATA_DIRECTORY</span><span class="op">=</span><span class="va">${STUDY}</span><span class="st">&quot;/data&quot;</span></span>
+<span id="cb4-59"><a href="#cb4-59"></a><span class="va">OUTPUT_DIRECTORY</span><span class="op">=</span><span class="va">${DATA_DIRECTORY}</span><span class="st">&quot;/bids&quot;</span></span>
+<span id="cb4-60"><a href="#cb4-60"></a><span class="co">#</span></span>
+<span id="cb4-61"><a href="#cb4-61"></a><span class="va">MRIQC_SINGULARITY_IMG</span><span class="op">=</span><span class="st">&quot;/mnt/data/soft/Images/mriqc_23.1.0.sif&quot;</span></span>
+<span id="cb4-62"><a href="#cb4-62"></a><span class="co">#</span></span>
+<span id="cb4-63"><a href="#cb4-63"></a><span class="co">## Comment: Parse the participants.tsv file and extract one subject ID from the line corresponding to this SLURM task.</span></span>
+<span id="cb4-64"><a href="#cb4-64"></a><span class="co">## Comment: 1 line below to uncomment if you want to launch the script for all the subjects listed in ${DATA_DIRECTORY}/participants.tsv</span></span>
+<span id="cb4-65"><a href="#cb4-65"></a><span class="co">#subject=$( sed -n -E &quot;$((${SLURM_ARRAY_TASK_ID} + 1))s/sub-(\S*)\&gt;.*/\1/gp&quot; ${DATA_DIRECTORY}/participants.tsv )</span></span>
+<span id="cb4-66"><a href="#cb4-66"></a><span class="co">#</span></span>
+<span id="cb4-67"><a href="#cb4-67"></a><span class="co">###############################</span></span>
+<span id="cb4-68"><a href="#cb4-68"></a><span class="co">#</span></span>
+<span id="cb4-69"><a href="#cb4-69"></a><span class="co"># To be printed in the out_mriQC_*.log file :</span></span>
+<span id="cb4-70"><a href="#cb4-70"></a><span class="bu">echo</span> <span class="st">&quot;#########################################################################&quot;</span></span>
+<span id="cb4-71"><a href="#cb4-71"></a><span class="bu">echo</span> <span class="st">&quot;USER:&quot;</span> <span class="va">$USER</span></span>
+<span id="cb4-72"><a href="#cb4-72"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-73"><a href="#cb4-73"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_SUBMITING_DIRECTORY:&quot;</span> <span class="va">$SLURM_SUBMIT_DIR</span></span>
+<span id="cb4-74"><a href="#cb4-74"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_JOB_NODELIST:&quot;</span> <span class="va">$SLURM_NODELIST</span></span>
+<span id="cb4-75"><a href="#cb4-75"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_JOB_NAME:&quot;</span> <span class="va">$SLURM_JOB_NAME</span></span>
+<span id="cb4-76"><a href="#cb4-76"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_JOB_ID:&quot;</span> <span class="va">$SLURM_JOBID</span></span>
+<span id="cb4-77"><a href="#cb4-77"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_ARRAY_TASK_ID:&quot;</span> <span class="va">$SLURM_ARRAY_TASK_ID</span></span>
+<span id="cb4-78"><a href="#cb4-78"></a><span class="bu">echo</span> <span class="st">&quot;SLURM_NTASKS:&quot;</span> <span class="va">$SLURM_NTASKS</span></span>
+<span id="cb4-79"><a href="#cb4-79"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-80"><a href="#cb4-80"></a><span class="bu">echo</span> <span class="st">&quot;Step 4: Control of the quality of images using mriQC BIDSapp&quot;</span></span>
+<span id="cb4-81"><a href="#cb4-81"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-82"><a href="#cb4-82"></a><span class="bu">echo</span> <span class="st">&quot;Subject:&quot;</span> <span class="va">${subject}</span></span>
+<span id="cb4-83"><a href="#cb4-83"></a><span class="bu">echo</span> <span class="st">&quot;Session:&quot;</span> <span class="va">${session_name}</span></span>
+<span id="cb4-84"><a href="#cb4-84"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-85"><a href="#cb4-85"></a><span class="bu">echo</span> <span class="st">&quot;Job STARTED @ </span><span class="va">$(</span><span class="fu">date</span><span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb4-86"><a href="#cb4-86"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-87"><a href="#cb4-87"></a><span class="co">#</span></span>
+<span id="cb4-88"><a href="#cb4-88"></a><span class="co"># PREREQUISITE: a dataset organised according to BIDS standards.</span></span>
+<span id="cb4-89"><a href="#cb4-89"></a><span class="co"># NOW: submission to slurm workload manager and run a singularity image for mriQC </span></span>
+<span id="cb4-90"><a href="#cb4-90"></a><span class="co">#</span></span>
+<span id="cb4-91"><a href="#cb4-91"></a><span class="co"># Compose the command line</span></span>
+<span id="cb4-92"><a href="#cb4-92"></a><span class="co">#</span></span>
+<span id="cb4-93"><a href="#cb4-93"></a><span class="co"># Note that this is only for one modality for a check! REMEMBER to change it afterwards to run all modalities</span></span>
+<span id="cb4-94"><a href="#cb4-94"></a><span class="co">######## PLAYING WITH THE --nprocs and --omp-nthreads 4 to find the sweet spot remember to change that</span></span>
+<span id="cb4-95"><a href="#cb4-95"></a></span>
+<span id="cb4-96"><a href="#cb4-96"></a></span>
+<span id="cb4-97"><a href="#cb4-97"></a><span class="va">cmd</span><span class="op">=</span><span class="st">&quot;srun singularity run </span><span class="dt">\</span></span>
+<span id="cb4-98"><a href="#cb4-98"></a><span class="st">   --cleanenv </span><span class="dt">\</span></span>
+<span id="cb4-99"><a href="#cb4-99"></a><span class="st">   --bind </span><span class="va">${STUDY}</span><span class="st">:/base --bind </span><span class="va">${DATA_DIRECTORY}</span><span class="st">:/data --bind </span><span class="va">${OUTPUT_DIRECTORY}</span><span class="st">:/out </span><span class="dt">\</span></span>
+<span id="cb4-100"><a href="#cb4-100"></a><span class="st">   </span><span class="va">${MRIQC_SINGULARITY_IMG}</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb4-101"><a href="#cb4-101"></a><span class="st">   /data/bids /out/derivatives/mriqc participant </span><span class="dt">\</span></span>
+<span id="cb4-102"><a href="#cb4-102"></a><span class="st">   --participant-label </span><span class="va">${subject}</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb4-103"><a href="#cb4-103"></a><span class="st">   --modalities bold </span><span class="dt">\</span></span>
+<span id="cb4-104"><a href="#cb4-104"></a><span class="st">   --work-dir /base/code/logs/mriqc_intermediate_results_</span><span class="va">${subject}</span><span class="st"> </span><span class="dt">\</span></span>
+<span id="cb4-105"><a href="#cb4-105"></a><span class="st">   --mem 96 </span><span class="dt">\</span></span>
+<span id="cb4-106"><a href="#cb4-106"></a><span class="st">   --nprocs 8 </span><span class="dt">\</span></span>
+<span id="cb4-107"><a href="#cb4-107"></a><span class="st">   --omp-nthreads 4 </span><span class="dt">\</span></span>
+<span id="cb4-108"><a href="#cb4-108"></a><span class="st">   --profile </span><span class="dt">\</span></span>
+<span id="cb4-109"><a href="#cb4-109"></a><span class="st">   --verbose-reports </span><span class="dt">\</span></span>
+<span id="cb4-110"><a href="#cb4-110"></a><span class="st">   --write-graph </span><span class="dt">\</span></span>
+<span id="cb4-111"><a href="#cb4-111"></a><span class="st">   --fft-spikes-detector&quot;</span></span>
+<span id="cb4-112"><a href="#cb4-112"></a></span>
+<span id="cb4-113"><a href="#cb4-113"></a><span class="co"># Setup done, run the command</span></span>
+<span id="cb4-114"><a href="#cb4-114"></a><span class="bu">echo</span> <span class="st">&quot;Command line used (example of the last subject processed)&quot;</span></span>
+<span id="cb4-115"><a href="#cb4-115"></a><span class="bu">echo</span> <span class="va">$cmd</span></span>
+<span id="cb4-116"><a href="#cb4-116"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-117"><a href="#cb4-117"></a><span class="co">#</span></span>
+<span id="cb4-118"><a href="#cb4-118"></a><span class="bu">eval</span> <span class="va">$cmd</span></span>
+<span id="cb4-119"><a href="#cb4-119"></a><span class="va">exitcode</span><span class="op">=</span><span class="va">$?</span></span>
+<span id="cb4-120"><a href="#cb4-120"></a><span class="co">#</span></span>
+<span id="cb4-121"><a href="#cb4-121"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-122"><a href="#cb4-122"></a><span class="bu">echo</span> <span class="st">&quot;Job STOPPED @ </span><span class="va">$(</span><span class="fu">date</span><span class="va">)</span><span class="st">&quot;</span></span>
+<span id="cb4-123"><a href="#cb4-123"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-124"><a href="#cb4-124"></a><span class="bu">echo</span> <span class="st">&quot;If MRIQC successful, the last end of the out*.log file is:&quot;</span></span>
+<span id="cb4-125"><a href="#cb4-125"></a><span class="bu">echo</span> <span class="st">&quot;&lt;Participant level finished successfully&gt; Otherwise, a problem occured.&quot;</span></span>
+<span id="cb4-126"><a href="#cb4-126"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-127"><a href="#cb4-127"></a><span class="bu">echo</span> <span class="st">&quot;Check that &quot;</span><span class="va">$OUTPUT_DIRECTORY</span><span class="st">&quot;/derivatives/mriqc and mriqc_working_directory&quot;</span></span>
+<span id="cb4-128"><a href="#cb4-128"></a><span class="bu">echo</span> <span class="st">&quot;folders have been created &amp; look at all reports created.&quot;</span></span>
+<span id="cb4-129"><a href="#cb4-129"></a><span class="bu">echo</span> <span class="st">&quot;############################################################################################&quot;</span></span>
+<span id="cb4-130"><a href="#cb4-130"></a><span class="bu">echo</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb4-131"><a href="#cb4-131"></a><span class="co"># Output results to a table</span></span>
+<span id="cb4-132"><a href="#cb4-132"></a><span class="bu">echo</span> <span class="st">&quot;sub-</span><span class="va">${subject}</span><span class="st">    </span><span class="va">${SLURM_ARRAY_TASK_ID}</span><span class="st">  </span><span class="va">$exitcode</span><span class="st">&quot;</span> <span class="op">&gt;&gt;</span> <span class="va">${SLURM_JOB_NAME}</span>.step4.<span class="va">${SLURM_ARRAY_JOB_ID}</span>.tsv</span>
+<span id="cb4-133"><a href="#cb4-133"></a><span class="bu">echo</span> Finished tasks <span class="va">${SLURM_ARRAY_TASK_ID}</span> with exit code <span class="va">$exitcode</span></span>
+<span id="cb4-134"><a href="#cb4-134"></a><span class="bu">exit</span> <span class="va">$exitcode</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 
 
@@ -5538,191 +5548,194 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class>
-<div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;Run MRIQC in CRNL cluster&quot;</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Anastasios Dadiotis&quot;</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="an">editor:</span><span class="co"> visual</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">    self-contained: true</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu"># Set up </span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>In this preliminary step we setup and define our variables. Note from the code below, change the variable “subject” to the subject you are working on. The Tiger notation is C for controls and G for Gamblers, e.g. for the first control subject the notation is C01 and for the first gambler G01. The following procedure is to submit the job for one subject. (to be updated for more).</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="in">``` bash</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard variable for the Tiger study</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="va">WD</span><span class="op">=</span>/crnldata/psyr2/Anastasios/Tiger_fmri</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="va">my_study</span><span class="op">=</span>Tiger</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="va">session_name</span><span class="op">=</span>S01</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># change this to the subject you are working on</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="va">subject</span><span class="op">=</span>XXX </span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="fu"># Submit the job</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>Run the following code to submit the job to the cluster. This is for one subject only. There are scripts for multiple subjects via Slurm array jobs. (To be updated)</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="in">``` bash</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Submit the job</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> <span class="va">${WD}</span>/<span class="va">${my_study}</span>/code</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> step4_mriqc.sh <span class="va">${subject}</span> <span class="va">${session_name}</span> <span class="va">${WD}</span> <span class="va">${my_study}</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="ex">squeue</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="fu"># Notes and Errors</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>I Run the job for the first time and i the job failed because it was out of memory. **(exit code 137).**</span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>I tried to increase the memory in the SBATCH directives in the step4_mriqc.sh file. I Tried with 100G. This did not work either</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>Just for check i will run it for only the T1 images just to see what is going on. NOTE that the T1w are significantly smaller size that the bold. </span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>If this does not work then there is definetely a problem. So this run correctly, i will now try for the bold to see if only the bold will be executed.</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>Bold job was again killed due to memory issues. What i will do next is to reduce to  --nprocs 8 and --omp-nthreads 4 (This setup means MRIQC will not use more than 8 processes at a time, and each process will use up to 2 threads if multi-threading is supported by the task). NOTE: This might considerably slow down the job.</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>Another solution would be to run MRIQC for each task seperetely as we did with T1w. **To be checked**</span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="ss"> - </span>With these parameters above (--nprocs 8 and --omp-nthreads 4) it was executed succesfully. However, it took almost 2 hours for the bold images. It is worth trying submitting a unique job for each task in each modality as this could be faster. Another thing to try is play with the parameters. For instance, next we can try --nprocs 10 and --omp-nthreads 6 and if this works then double the original parameters</span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="fu"># Scripts</span></span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a> </span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a> <span class="in">``` {.bash filename=&quot;step4_mriqc.sh&quot; code-line-numbers=&quot;true&quot; code-fold=&quot;true&quot;}</span></span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a><span class="in"> #!/bin/bash</span></span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="in">###############################</span></span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a><span class="in">### from https://bircibrain.github.io/computingguide/docs/fmri-preprocessing/mriqc.html#singularitystorrs-hpc</span></span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="in">### </span></span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="in">### Adapted for the CRNL </span></span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="in">### by Gaelle Leroux, PhD</span></span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a><span class="in">### and Isabelle Faillenot, PhD</span></span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="in">###</span></span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="in">### Fall 2020, Lyon</span></span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="in">### gaelle.leroux @ cnrs.fr</span></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="in">###</span></span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="in">### launched by: sbatch step4_mriqc.sh ${subject} ${session_name} ${WD} ${my_study}</span></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="in">###</span></span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="in">###############################</span></span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="in">### The SBATCH directives for a sequential (email line 37 to be revised only):</span></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a><span class="in">### Your job name displayed by the queue</span></span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="in">### use &quot;squeue&quot; command in a terminal to see it</span></span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --job-name=mriQC</span></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a><span class="in">### Specify output and error files</span></span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a><span class="in">### %A for job array&#39;s master job allocation number</span></span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a><span class="in">### or %a for job array ID (index) number</span></span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --output=out_mriQC_%A.log</span></span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --error=err_mriQC_%A.log</span></span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="in">### Specify the number of tasks, CPU per task and buffer size to be used</span></span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --nodes=1</span></span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --ntasks=1</span></span>
-<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --cpus-per-task=4</span></span>
-<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --mem=100G</span></span>
-<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a><span class="in">### Send email for which step: NONE, BEGIN, END, FAIL, REQUEUE, ALL</span></span>
-<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --mail-type=ALL</span></span>
-<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --mail-user=${firstName}.${lastName}@univ-lyon1.fr</span></span>
-<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a><span class="in">### The size of the participant table to be run</span></span>
-<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a><span class="in">###SBATCH --array=1-1</span></span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a><span class="in">### If you want to launch your script on a specific node of the cluser</span></span>
-<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a><span class="in">### If yes, uncomment the appropirate line(s) </span></span>
-<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a><span class="in">###SBATCH --nodelist=node9</span></span>
-<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --exclude=node9</span></span>
-<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a><span class="in">###SBATCH --exclude=node[9-10]</span></span>
-<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a><span class="in"># End of the SBATCH directives</span></span>
-<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a><span class="in">###############################</span></span>
-<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a><span class="in"># Paths of the study</span></span>
-<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a><span class="in">subject=$1</span></span>
-<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a><span class="in">session_name=$2</span></span>
-<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a><span class="in">WD=$3</span></span>
-<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a><span class="in">my_study=$4</span></span>
-<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a><span class="in">STUDY=${WD}/${my_study}</span></span>
-<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a><span class="in">DATA_DIRECTORY=${STUDY}&quot;/data&quot;</span></span>
-<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a><span class="in">OUTPUT_DIRECTORY=${DATA_DIRECTORY}&quot;/bids&quot;</span></span>
-<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a><span class="in">MRIQC_SINGULARITY_IMG=&quot;/mnt/data/soft/Images/mriqc_23.1.0.sif&quot;</span></span>
-<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a><span class="in">## Comment: Parse the participants.tsv file and extract one subject ID from the line corresponding to this SLURM task.</span></span>
-<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a><span class="in">## Comment: 1 line below to uncomment if you want to launch the script for all the subjects listed in ${DATA_DIRECTORY}/participants.tsv</span></span>
-<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a><span class="in">#subject=$( sed -n -E &quot;$((${SLURM_ARRAY_TASK_ID} + 1))s/sub-(\S*)\&gt;.*/\1/gp&quot; ${DATA_DIRECTORY}/participants.tsv )</span></span>
-<span id="cb4-116"><a href="#cb4-116" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-117"><a href="#cb4-117" aria-hidden="true" tabindex="-1"></a><span class="in">###############################</span></span>
-<span id="cb4-118"><a href="#cb4-118" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-119"><a href="#cb4-119" aria-hidden="true" tabindex="-1"></a><span class="in"># To be printed in the out_mriQC_*.log file :</span></span>
-<span id="cb4-120"><a href="#cb4-120" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#########################################################################&quot;</span></span>
-<span id="cb4-121"><a href="#cb4-121" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;USER:&quot; $USER</span></span>
-<span id="cb4-122"><a href="#cb4-122" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-123"><a href="#cb4-123" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_SUBMITING_DIRECTORY:&quot; $SLURM_SUBMIT_DIR</span></span>
-<span id="cb4-124"><a href="#cb4-124" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_JOB_NODELIST:&quot; $SLURM_NODELIST</span></span>
-<span id="cb4-125"><a href="#cb4-125" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_JOB_NAME:&quot; $SLURM_JOB_NAME</span></span>
-<span id="cb4-126"><a href="#cb4-126" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_JOB_ID:&quot; $SLURM_JOBID</span></span>
-<span id="cb4-127"><a href="#cb4-127" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_ARRAY_TASK_ID:&quot; $SLURM_ARRAY_TASK_ID</span></span>
-<span id="cb4-128"><a href="#cb4-128" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_NTASKS:&quot; $SLURM_NTASKS</span></span>
-<span id="cb4-129"><a href="#cb4-129" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-130"><a href="#cb4-130" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Step 4: Control of the quality of images using mriQC BIDSapp&quot;</span></span>
-<span id="cb4-131"><a href="#cb4-131" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-132"><a href="#cb4-132" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Subject:&quot; ${subject}</span></span>
-<span id="cb4-133"><a href="#cb4-133" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Session:&quot; ${session_name}</span></span>
-<span id="cb4-134"><a href="#cb4-134" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-135"><a href="#cb4-135" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Job STARTED @ $(date)&quot;</span></span>
-<span id="cb4-136"><a href="#cb4-136" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-137"><a href="#cb4-137" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-138"><a href="#cb4-138" aria-hidden="true" tabindex="-1"></a><span class="in"># PREREQUISITE: a dataset organised according to BIDS standards.</span></span>
-<span id="cb4-139"><a href="#cb4-139" aria-hidden="true" tabindex="-1"></a><span class="in"># NOW: submission to slurm workload manager and run a singularity image for mriQC </span></span>
-<span id="cb4-140"><a href="#cb4-140" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-141"><a href="#cb4-141" aria-hidden="true" tabindex="-1"></a><span class="in"># Compose the command line</span></span>
-<span id="cb4-142"><a href="#cb4-142" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-143"><a href="#cb4-143" aria-hidden="true" tabindex="-1"></a><span class="in"># Note that this is only for one modality for a check! REMEMBER to change it afterwards to run all modalities</span></span>
-<span id="cb4-144"><a href="#cb4-144" aria-hidden="true" tabindex="-1"></a><span class="in">######## PLAYING WITH THE --nprocs and --omp-nthreads 4 to find the sweet spot remember to change that</span></span>
-<span id="cb4-145"><a href="#cb4-145" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-146"><a href="#cb4-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-147"><a href="#cb4-147" aria-hidden="true" tabindex="-1"></a><span class="in">cmd=&quot;srun singularity run \</span></span>
-<span id="cb4-148"><a href="#cb4-148" aria-hidden="true" tabindex="-1"></a><span class="in">    --cleanenv \</span></span>
-<span id="cb4-149"><a href="#cb4-149" aria-hidden="true" tabindex="-1"></a><span class="in">    --bind ${STUDY}:/base --bind ${DATA_DIRECTORY}:/data --bind ${OUTPUT_DIRECTORY}:/out \</span></span>
-<span id="cb4-150"><a href="#cb4-150" aria-hidden="true" tabindex="-1"></a><span class="in">    ${MRIQC_SINGULARITY_IMG} \</span></span>
-<span id="cb4-151"><a href="#cb4-151" aria-hidden="true" tabindex="-1"></a><span class="in">    /data/bids /out/derivatives/mriqc participant \</span></span>
-<span id="cb4-152"><a href="#cb4-152" aria-hidden="true" tabindex="-1"></a><span class="in">    --participant-label ${subject} \</span></span>
-<span id="cb4-153"><a href="#cb4-153" aria-hidden="true" tabindex="-1"></a><span class="in">    --modalities bold \</span></span>
-<span id="cb4-154"><a href="#cb4-154" aria-hidden="true" tabindex="-1"></a><span class="in">    --work-dir /base/code/logs/mriqc_intermediate_results_${subject} \</span></span>
-<span id="cb4-155"><a href="#cb4-155" aria-hidden="true" tabindex="-1"></a><span class="in">    --mem 96 \</span></span>
-<span id="cb4-156"><a href="#cb4-156" aria-hidden="true" tabindex="-1"></a><span class="in">    --nprocs 8 \</span></span>
-<span id="cb4-157"><a href="#cb4-157" aria-hidden="true" tabindex="-1"></a><span class="in">    --omp-nthreads 4 \</span></span>
-<span id="cb4-158"><a href="#cb4-158" aria-hidden="true" tabindex="-1"></a><span class="in">    --profile \</span></span>
-<span id="cb4-159"><a href="#cb4-159" aria-hidden="true" tabindex="-1"></a><span class="in">    --verbose-reports \</span></span>
-<span id="cb4-160"><a href="#cb4-160" aria-hidden="true" tabindex="-1"></a><span class="in">    --write-graph \</span></span>
-<span id="cb4-161"><a href="#cb4-161" aria-hidden="true" tabindex="-1"></a><span class="in">    --fft-spikes-detector&quot;</span></span>
-<span id="cb4-162"><a href="#cb4-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-163"><a href="#cb4-163" aria-hidden="true" tabindex="-1"></a><span class="in"># Setup done, run the command</span></span>
-<span id="cb4-164"><a href="#cb4-164" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Command line used (example of the last subject processed)&quot;</span></span>
-<span id="cb4-165"><a href="#cb4-165" aria-hidden="true" tabindex="-1"></a><span class="in">echo $cmd</span></span>
-<span id="cb4-166"><a href="#cb4-166" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-167"><a href="#cb4-167" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-168"><a href="#cb4-168" aria-hidden="true" tabindex="-1"></a><span class="in">eval $cmd</span></span>
-<span id="cb4-169"><a href="#cb4-169" aria-hidden="true" tabindex="-1"></a><span class="in">exitcode=$?</span></span>
-<span id="cb4-170"><a href="#cb4-170" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
-<span id="cb4-171"><a href="#cb4-171" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-172"><a href="#cb4-172" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Job STOPPED @ $(date)&quot;</span></span>
-<span id="cb4-173"><a href="#cb4-173" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-174"><a href="#cb4-174" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;If MRIQC successful, the last end of the out*.log file is:&quot;</span></span>
-<span id="cb4-175"><a href="#cb4-175" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;&lt;Participant level finished successfully&gt; Otherwise, a problem occured.&quot;</span></span>
-<span id="cb4-176"><a href="#cb4-176" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-177"><a href="#cb4-177" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Check that &quot;$OUTPUT_DIRECTORY&quot;/derivatives/mriqc and mriqc_working_directory&quot;</span></span>
-<span id="cb4-178"><a href="#cb4-178" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;folders have been created &amp; look at all reports created.&quot;</span></span>
-<span id="cb4-179"><a href="#cb4-179" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;############################################################################################&quot;</span></span>
-<span id="cb4-180"><a href="#cb4-180" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
-<span id="cb4-181"><a href="#cb4-181" aria-hidden="true" tabindex="-1"></a><span class="in"># Output results to a table</span></span>
-<span id="cb4-182"><a href="#cb4-182" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;sub-${subject}    ${SLURM_ARRAY_TASK_ID}  $exitcode&quot; &gt;&gt; ${SLURM_JOB_NAME}.step4.${SLURM_ARRAY_JOB_ID}.tsv</span></span>
-<span id="cb4-183"><a href="#cb4-183" aria-hidden="true" tabindex="-1"></a><span class="in">echo Finished tasks ${SLURM_ARRAY_TASK_ID} with exit code $exitcode</span></span>
-<span id="cb4-184"><a href="#cb4-184" aria-hidden="true" tabindex="-1"></a><span class="in">exit $exitcode</span></span>
-<span id="cb4-185"><a href="#cb4-185" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> &quot;Run MRIQC in CRNL cluster&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> &quot;Anastasios Dadiotis&quot;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="an">editor:</span><span class="co"> visual</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> true</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">    self-contained: true</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="fu"># Set up</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>In this preliminary step we setup and define our variables. Note from the code below, change the variable “subject” to the subject you are working on. The Tiger notation is C for controls and G for Gamblers, e.g. for the first control subject the notation is C01 and for the first gambler G01. The following procedure is to submit the job for one subject. (to be updated for more).</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="in">``` bash</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard variable for the Tiger study</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="va">WD</span><span class="op">=</span>/mnt/data/anastasios_d</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="va">my_study</span><span class="op">=</span>Tiger</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="va">session_name</span><span class="op">=</span>S01</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># change this to the subject you are working on</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="va">subject</span><span class="op">=</span>XXX </span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="fu"># Submit the job</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>Run the following code to submit the job to the cluster. This is for one subject only. There are scripts for multiple subjects via Slurm array jobs. (To be updated)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="in">``` bash</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Submit the job</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> <span class="va">${WD}</span>/<span class="va">${my_study}</span>/code</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> step4_mriqc.sh <span class="va">${subject}</span> <span class="va">${session_name}</span> <span class="va">${WD}</span> <span class="va">${my_study}</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="ex">squeue</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="fu"># sync dir</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>After the job is finished, copy the updated bids directory (with the mriqc derivatives) to the crnldata directory so i can inspect the html files. For that i will use rsync istead of cp because it is faster and more efficient. The command is the following:</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="in">``` bash</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="fu">rsync</span> <span class="at">-av</span> <span class="at">--progress</span> /mnt/data/anastasios_d/Tiger/data/bids /crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/data/</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="fu"># Notes and Errors</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>I Run the job for the first time and i the job failed because it was out of memory. **(exit code 137).** I tried to increase the memory in the SBATCH directives in the step4_mriqc.sh file. I Tried with 100G. This did not work either Just for check i will run it for only the T1 images just to see what is going on. NOTE that the T1w are significantly smaller size that the bold. If this does not work then there is definetely a problem. So this run correctly, i will now try for the bold to see if only the bold will be executed. Bold job was again killed due to memory issues. What i will do next is to reduce to --nprocs 8 and --omp-nthreads 4 (This setup means MRIQC will not use more than 8 processes at a time, and each process will use up to 2 threads if multi-threading is supported by the task). NOTE: This might considerably slow down the job. Another solution would be to run MRIQC for each task seperetely as we did with T1w. **To be checked**</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>With these parameters above (--nprocs 8 and --omp-nthreads 4) it was executed succesfully. However, it took almost 2 hours for the bold images. It is worth trying submitting a unique job for each task in each modality as this could be faster. Another thing to try is play with the parameters. For instance, next we can try --nprocs 10 and --omp-nthreads 6 and if this works then double the original parameters</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="fu"># Scripts</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="in">``` {.bash filename=&quot;step4_mriqc.sh&quot; code-line-numbers=&quot;true&quot; code-fold=&quot;true&quot;}</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="in">#!/bin/bash</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="in">###############################</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="in">### from https://bircibrain.github.io/computingguide/docs/fmri-preprocessing/mriqc.html#singularitystorrs-hpc</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="in">### </span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="in">### Adapted for the CRNL </span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="in">### by Gaelle Leroux, PhD</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="in">### and Isabelle Faillenot, PhD</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="in">###</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="in">### Fall 2020, Lyon</span></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a><span class="in">### gaelle.leroux @ cnrs.fr</span></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="in">###</span></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a><span class="in">### launched by: sbatch step4_mriqc.sh ${subject} ${session_name} ${WD} ${my_study}</span></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="in">###</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a><span class="in">###############################</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a><span class="in">### The SBATCH directives for a sequential (email line 37 to be revised only):</span></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="in">### Your job name displayed by the queue</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a><span class="in">### use &quot;squeue&quot; command in a terminal to see it</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --job-name=mriQC</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="in">### Specify output and error files</span></span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a><span class="in">### %A for job array&#39;s master job allocation number</span></span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a><span class="in">### or %a for job array ID (index) number</span></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --output=out_mriQC_%A.log</span></span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --error=err_mriQC_%A.log</span></span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a><span class="in">### Specify the number of tasks, CPU per task and buffer size to be used</span></span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --nodes=1</span></span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --ntasks=1</span></span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --cpus-per-task=4</span></span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --mem=100G</span></span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a><span class="in">### Send email for which step: NONE, BEGIN, END, FAIL, REQUEUE, ALL</span></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --mail-type=ALL</span></span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --mail-user=${firstName}.${lastName}@univ-lyon1.fr</span></span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a><span class="in">### The size of the participant table to be run</span></span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a><span class="in">###SBATCH --array=1-1</span></span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a><span class="in">### If you want to launch your script on a specific node of the cluser</span></span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a><span class="in">### If yes, uncomment the appropirate line(s) </span></span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a><span class="in">###SBATCH --nodelist=node9</span></span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a><span class="in">#SBATCH --exclude=node9</span></span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a><span class="in">###SBATCH --exclude=node[9-10]</span></span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a><span class="in"># End of the SBATCH directives</span></span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a><span class="in">###############################</span></span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a><span class="in"># Paths of the study</span></span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a><span class="in">subject=$1</span></span>
+<span id="cb5-107"><a href="#cb5-107" aria-hidden="true" tabindex="-1"></a><span class="in">session_name=$2</span></span>
+<span id="cb5-108"><a href="#cb5-108" aria-hidden="true" tabindex="-1"></a><span class="in">WD=$3</span></span>
+<span id="cb5-109"><a href="#cb5-109" aria-hidden="true" tabindex="-1"></a><span class="in">my_study=$4</span></span>
+<span id="cb5-110"><a href="#cb5-110" aria-hidden="true" tabindex="-1"></a><span class="in">STUDY=${WD}/${my_study}</span></span>
+<span id="cb5-111"><a href="#cb5-111" aria-hidden="true" tabindex="-1"></a><span class="in">DATA_DIRECTORY=${STUDY}&quot;/data&quot;</span></span>
+<span id="cb5-112"><a href="#cb5-112" aria-hidden="true" tabindex="-1"></a><span class="in">OUTPUT_DIRECTORY=${DATA_DIRECTORY}&quot;/bids&quot;</span></span>
+<span id="cb5-113"><a href="#cb5-113" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-114"><a href="#cb5-114" aria-hidden="true" tabindex="-1"></a><span class="in">MRIQC_SINGULARITY_IMG=&quot;/mnt/data/soft/Images/mriqc_23.1.0.sif&quot;</span></span>
+<span id="cb5-115"><a href="#cb5-115" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-116"><a href="#cb5-116" aria-hidden="true" tabindex="-1"></a><span class="in">## Comment: Parse the participants.tsv file and extract one subject ID from the line corresponding to this SLURM task.</span></span>
+<span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a><span class="in">## Comment: 1 line below to uncomment if you want to launch the script for all the subjects listed in ${DATA_DIRECTORY}/participants.tsv</span></span>
+<span id="cb5-118"><a href="#cb5-118" aria-hidden="true" tabindex="-1"></a><span class="in">#subject=$( sed -n -E &quot;$((${SLURM_ARRAY_TASK_ID} + 1))s/sub-(\S*)\&gt;.*/\1/gp&quot; ${DATA_DIRECTORY}/participants.tsv )</span></span>
+<span id="cb5-119"><a href="#cb5-119" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-120"><a href="#cb5-120" aria-hidden="true" tabindex="-1"></a><span class="in">###############################</span></span>
+<span id="cb5-121"><a href="#cb5-121" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-122"><a href="#cb5-122" aria-hidden="true" tabindex="-1"></a><span class="in"># To be printed in the out_mriQC_*.log file :</span></span>
+<span id="cb5-123"><a href="#cb5-123" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#########################################################################&quot;</span></span>
+<span id="cb5-124"><a href="#cb5-124" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;USER:&quot; $USER</span></span>
+<span id="cb5-125"><a href="#cb5-125" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-126"><a href="#cb5-126" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_SUBMITING_DIRECTORY:&quot; $SLURM_SUBMIT_DIR</span></span>
+<span id="cb5-127"><a href="#cb5-127" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_JOB_NODELIST:&quot; $SLURM_NODELIST</span></span>
+<span id="cb5-128"><a href="#cb5-128" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_JOB_NAME:&quot; $SLURM_JOB_NAME</span></span>
+<span id="cb5-129"><a href="#cb5-129" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_JOB_ID:&quot; $SLURM_JOBID</span></span>
+<span id="cb5-130"><a href="#cb5-130" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_ARRAY_TASK_ID:&quot; $SLURM_ARRAY_TASK_ID</span></span>
+<span id="cb5-131"><a href="#cb5-131" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;SLURM_NTASKS:&quot; $SLURM_NTASKS</span></span>
+<span id="cb5-132"><a href="#cb5-132" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-133"><a href="#cb5-133" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Step 4: Control of the quality of images using mriQC BIDSapp&quot;</span></span>
+<span id="cb5-134"><a href="#cb5-134" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Subject:&quot; ${subject}</span></span>
+<span id="cb5-136"><a href="#cb5-136" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Session:&quot; ${session_name}</span></span>
+<span id="cb5-137"><a href="#cb5-137" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-138"><a href="#cb5-138" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Job STARTED @ $(date)&quot;</span></span>
+<span id="cb5-139"><a href="#cb5-139" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-140"><a href="#cb5-140" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-141"><a href="#cb5-141" aria-hidden="true" tabindex="-1"></a><span class="in"># PREREQUISITE: a dataset organised according to BIDS standards.</span></span>
+<span id="cb5-142"><a href="#cb5-142" aria-hidden="true" tabindex="-1"></a><span class="in"># NOW: submission to slurm workload manager and run a singularity image for mriQC </span></span>
+<span id="cb5-143"><a href="#cb5-143" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-144"><a href="#cb5-144" aria-hidden="true" tabindex="-1"></a><span class="in"># Compose the command line</span></span>
+<span id="cb5-145"><a href="#cb5-145" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-146"><a href="#cb5-146" aria-hidden="true" tabindex="-1"></a><span class="in"># Note that this is only for one modality for a check! REMEMBER to change it afterwards to run all modalities</span></span>
+<span id="cb5-147"><a href="#cb5-147" aria-hidden="true" tabindex="-1"></a><span class="in">######## PLAYING WITH THE --nprocs and --omp-nthreads 4 to find the sweet spot remember to change that</span></span>
+<span id="cb5-148"><a href="#cb5-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-149"><a href="#cb5-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-150"><a href="#cb5-150" aria-hidden="true" tabindex="-1"></a><span class="in">cmd=&quot;srun singularity run \</span></span>
+<span id="cb5-151"><a href="#cb5-151" aria-hidden="true" tabindex="-1"></a><span class="in">   --cleanenv \</span></span>
+<span id="cb5-152"><a href="#cb5-152" aria-hidden="true" tabindex="-1"></a><span class="in">   --bind ${STUDY}:/base --bind ${DATA_DIRECTORY}:/data --bind ${OUTPUT_DIRECTORY}:/out \</span></span>
+<span id="cb5-153"><a href="#cb5-153" aria-hidden="true" tabindex="-1"></a><span class="in">   ${MRIQC_SINGULARITY_IMG} \</span></span>
+<span id="cb5-154"><a href="#cb5-154" aria-hidden="true" tabindex="-1"></a><span class="in">   /data/bids /out/derivatives/mriqc participant \</span></span>
+<span id="cb5-155"><a href="#cb5-155" aria-hidden="true" tabindex="-1"></a><span class="in">   --participant-label ${subject} \</span></span>
+<span id="cb5-156"><a href="#cb5-156" aria-hidden="true" tabindex="-1"></a><span class="in">   --modalities bold \</span></span>
+<span id="cb5-157"><a href="#cb5-157" aria-hidden="true" tabindex="-1"></a><span class="in">   --work-dir /base/code/logs/mriqc_intermediate_results_${subject} \</span></span>
+<span id="cb5-158"><a href="#cb5-158" aria-hidden="true" tabindex="-1"></a><span class="in">   --mem 96 \</span></span>
+<span id="cb5-159"><a href="#cb5-159" aria-hidden="true" tabindex="-1"></a><span class="in">   --nprocs 8 \</span></span>
+<span id="cb5-160"><a href="#cb5-160" aria-hidden="true" tabindex="-1"></a><span class="in">   --omp-nthreads 4 \</span></span>
+<span id="cb5-161"><a href="#cb5-161" aria-hidden="true" tabindex="-1"></a><span class="in">   --profile \</span></span>
+<span id="cb5-162"><a href="#cb5-162" aria-hidden="true" tabindex="-1"></a><span class="in">   --verbose-reports \</span></span>
+<span id="cb5-163"><a href="#cb5-163" aria-hidden="true" tabindex="-1"></a><span class="in">   --write-graph \</span></span>
+<span id="cb5-164"><a href="#cb5-164" aria-hidden="true" tabindex="-1"></a><span class="in">   --fft-spikes-detector&quot;</span></span>
+<span id="cb5-165"><a href="#cb5-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-166"><a href="#cb5-166" aria-hidden="true" tabindex="-1"></a><span class="in"># Setup done, run the command</span></span>
+<span id="cb5-167"><a href="#cb5-167" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Command line used (example of the last subject processed)&quot;</span></span>
+<span id="cb5-168"><a href="#cb5-168" aria-hidden="true" tabindex="-1"></a><span class="in">echo $cmd</span></span>
+<span id="cb5-169"><a href="#cb5-169" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-170"><a href="#cb5-170" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-171"><a href="#cb5-171" aria-hidden="true" tabindex="-1"></a><span class="in">eval $cmd</span></span>
+<span id="cb5-172"><a href="#cb5-172" aria-hidden="true" tabindex="-1"></a><span class="in">exitcode=$?</span></span>
+<span id="cb5-173"><a href="#cb5-173" aria-hidden="true" tabindex="-1"></a><span class="in">#</span></span>
+<span id="cb5-174"><a href="#cb5-174" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-175"><a href="#cb5-175" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Job STOPPED @ $(date)&quot;</span></span>
+<span id="cb5-176"><a href="#cb5-176" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-177"><a href="#cb5-177" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;If MRIQC successful, the last end of the out*.log file is:&quot;</span></span>
+<span id="cb5-178"><a href="#cb5-178" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;&lt;Participant level finished successfully&gt; Otherwise, a problem occured.&quot;</span></span>
+<span id="cb5-179"><a href="#cb5-179" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-180"><a href="#cb5-180" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;Check that &quot;$OUTPUT_DIRECTORY&quot;/derivatives/mriqc and mriqc_working_directory&quot;</span></span>
+<span id="cb5-181"><a href="#cb5-181" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;folders have been created &amp; look at all reports created.&quot;</span></span>
+<span id="cb5-182"><a href="#cb5-182" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;############################################################################################&quot;</span></span>
+<span id="cb5-183"><a href="#cb5-183" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;#&quot;</span></span>
+<span id="cb5-184"><a href="#cb5-184" aria-hidden="true" tabindex="-1"></a><span class="in"># Output results to a table</span></span>
+<span id="cb5-185"><a href="#cb5-185" aria-hidden="true" tabindex="-1"></a><span class="in">echo &quot;sub-${subject}    ${SLURM_ARRAY_TASK_ID}  $exitcode&quot; &gt;&gt; ${SLURM_JOB_NAME}.step4.${SLURM_ARRAY_JOB_ID}.tsv</span></span>
+<span id="cb5-186"><a href="#cb5-186" aria-hidden="true" tabindex="-1"></a><span class="in">echo Finished tasks ${SLURM_ARRAY_TASK_ID} with exit code $exitcode</span></span>
+<span id="cb5-187"><a href="#cb5-187" aria-hidden="true" tabindex="-1"></a><span class="in">exit $exitcode</span></span>
+<span id="cb5-188"><a href="#cb5-188" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">

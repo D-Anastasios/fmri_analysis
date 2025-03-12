@@ -9,12 +9,13 @@ format:
     self-contained: true
 ---
 
-# Set up 
+# Set up
+
 In this preliminary step we setup and define our variables. Note from the code below, change the variable “subject” to the subject you are working on. The Tiger notation is C for controls and G for Gamblers, e.g. for the first control subject the notation is C01 and for the first gambler G01. The following procedure is to submit the job for one subject. (to be updated for more).
 
 ``` bash
 # Standard variable for the Tiger study
-WD=/crnldata/psyr2/Anastasios/Tiger_fmri
+WD=/mnt/data/anastasios_d
 my_study=Tiger
 session_name=S01
 
@@ -32,21 +33,31 @@ Need step3 (see Bids) to be done ; mriqc is optional. To use fmap to make SDC, j
 # Modify the 3 *.son files in the fmap directory
 
 # To add the "IntendedFor" field in the json files of the fieldmaps run the following command
-chmod -R 770 /crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/data/bids/${subject}/ses-S01/fmap/ # This is extremelly important to have the right to write in the directory
+chmod -R 770 /mnt/data/anastasios_d/Tiger/data/bids/sub-G03/ses-S01/fmap # This is extremelly important to have the right to write in the directory
 
 
 cd ${WD}/${my_study}/code
 python3 add_IntendedFor_Fieldmaps.py ${subject} # it is a very light job so i will run it in the frontal node instead of assigning it to other nodes. 
 
 
-# Submit the job for one subject (to launch the job for a list of subjects, see the optional section at the end of this tutorial)
-cd ${WD}/${my_study}/code
+# give permisions
 chmod -R 770 .
 chmod -R 770 ${WD}/${my_study}/data/bids/derivatives
 chmod -R 770 ${WD}/${my_study}/data/bids/derivatives/freesurfer-7.1.1 # to check 
 
-cd ${WD}/${my_study}/code
+# delete all macOs hidden files so fmriPrep does not throw an error
+find /mnt/data/anastasios_d/Tiger/data/bids -name '._*' -delete
+
+# submit the job
 sbatch step5_fmriprep.sh ${subject} ${session_name} ${WD} ${my_study}
+```
+
+# sync dir
+
+After the job is finished, copy the updated bids directory (with the mriqc derivatives) to the crnldata directory so i can inspect the html files. For that i will use rsync istead of cp because it is faster and more efficient. The command is the following:
+
+``` bash
+rsync -av --progress /mnt/data/anastasios_d/Tiger/data/bids /crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/data/
 ```
 
 # Scripts
@@ -166,10 +177,10 @@ echo "#"
 # Submission to slurm and running a singularity image fo fmriPrep 
 # Compose the command line
 # options:
-#   --use-aroma  \				to use ICA-aroma to separarte noise from signal (cf prium15)
-#   --use-syn-sdc \				to have SDC but without fmap images
-#   --fd-spike-threshold 0.3 \	to change the FD threshold to calculate motion_outliers (default = 0.5)
-#   --output-spaces MNI152NLin2009cSym:res-1 \	to use a symetric template (available only in a cubic resolution of 1mm)
+#   --use-aroma  \              to use ICA-aroma to separarte noise from signal (cf prium15)
+#   --use-syn-sdc \             to have SDC but without fmap images
+#   --fd-spike-threshold 0.3 \  to change the FD threshold to calculate motion_outliers (default = 0.5)
+#   --output-spaces MNI152NLin2009cSym:res-1 \  to use a symetric template (available only in a cubic resolution of 1mm)
 # if you have fmap acquisition, and if you want to use them for the SDC : 
 # in the files :data/bids/sub-XX/ses-ZZZ/*magnitude1.json + *magnitude2.json + *_phasediff.json
 # add at the end : 
@@ -177,16 +188,16 @@ echo "#"
 #                   "ses-IRM/func/sub-XX_ses-ZZZ_task-YY_bold.nii.gz"]
 #
 cmd="srun singularity run \
-	--cleanenv \
-	--bind ${DATA_DIRECTORY}:/data --bind ${LOCAL_FREESURFER_DIR}:/fsdir \
-	${FMRIPREP_SINGULARITY_IMG} \
-	/data/bids /data/bids/derivatives/fmriprep participant \
-	--participant-label ${subject} \
-	--work-dir /data/codes \
-	--low-mem \
-	--stop-on-first-crash \
-	--write-graph \
-	--fs-license-file /fsdir/license.txt --fs-subjects-dir /fsdir"
+    --cleanenv \
+    --bind ${DATA_DIRECTORY}:/data --bind ${LOCAL_FREESURFER_DIR}:/fsdir \
+    ${FMRIPREP_SINGULARITY_IMG} \
+    /data/bids /data/bids/derivatives/fmriprep participant \
+    --participant-label ${subject} \
+    --work-dir /data/codes \
+    --low-mem \
+    --stop-on-first-crash \
+    --write-graph \
+    --fs-license-file /fsdir/license.txt --fs-subjects-dir /fsdir"
 #
 # Setup done, run the command
 echo Running task ${SLURM_ARRAY_TASK_ID}
@@ -207,20 +218,25 @@ echo "##########################################################################
 echo "#"
 # Output results to a table
 # code 137 : raise the --mem SBATCH directive
-echo "sub-${subject}	${SLURM_ARRAY_TASK_ID}	$exitcode" >> ${SLURM_JOB_NAME}.step5.${SLURM_ARRAY_JOB_ID}.tsv
+echo "sub-${subject}    ${SLURM_ARRAY_TASK_ID}  $exitcode" >> ${SLURM_JOB_NAME}.step5.${SLURM_ARRAY_JOB_ID}.tsv
 echo Finished tasks ${SLURM_ARRAY_TASK_ID} with exit code $exitcode
 exit $exitcode
 ```
 
-
 ### fieldmaps
+
+For fmriPrep to use the fieldmaps we need to add an IntededFor field to json files who let the algorithm know which fieldmaps map with which task.
+
+::: callout-note
+In our case we force the participants to take a break after the gambling task. This is why we have to create two different lists of scans for the IntendedFor field. One for all the tasks except the gambling task and one for the gambling task.
+:::
 
 ``` {.python filename="add_IntendedFor_Fieldmaps.py" code-line-numbers="true" code-fold="true"}
 """
 Title: Script to add IntendedFor field to the json files of the fieldmaps
 Author: Anastasios Dadiotis
 Date created: 15/04/2024
-Date last modified: 15/04/2024
+Date last modified: 31/01/2025
 Description: This script will add the IntendedFor field to the json files of the fieldmaps. The IntendedFor field is a list of the functional images that the fieldmap is intended for. 
 This is recommended for the BIDS format but is necessary to Fieldmap correct within FMRIprep. 
 """
@@ -243,42 +259,47 @@ import sys
 id = sys.argv[1]
 
 # Define the directory path
-#directory_path = f'/Volumes/psyr2/Anastasios/Tiger_fmri/Tiger/data/bids/sub-{id}/ses-S01/fmap'
-directory_path = f'/crnldata/psyr2/Anastasios/Tiger_fmri/Tiger/data/bids/sub-{id}/ses-S01/fmap'
+#directory_path = f'/Volumes/psyr2/Anastasios/Tiger_fmri/Tiger/data/bids/sub-{id}/ses-S01/fmap' # for the mac to run locally when the data are crnldata and mounted
+directory_path = f'/mnt/data/anastasios_d/Tiger/data/bids/sub-{id}/ses-S01/fmap'
 # load the json files of the fieldmaps
 json_files = [f for f in os.listdir(directory_path) if f.endswith('.json') and "._" not in f]
 
-# create the list of scans for the IntendedFor field
-IntendedFor = []
-tasks = ["BigBuckBunny", "Hariri", "PartlyCloudy", "SkewedGambling"]
+# create the list of scans for the intendedFor field for all task 
+intendedForAllTasks = []
+tasks = ["BigBuckBunny", "Hariri", "PartlyCloudy"]
 
-# loop over tasks, runs and echoes to create the list of scans for the IntendedFor field
+# list for the gambling task 
+intendedForGambling = []
+
+# loop over tasks, echoes to create the list of scans for the intendedFor field for all tasks but the gambling 
 for task in tasks:
-    if task != "SkewedGambling":
-        for echo in range (1,4):
-            IntendedFor.append(f"ses-S01/func/sub-{id}_ses-S01_task-{task}_echo-{echo}_bold.nii.gz")
-    elif task == "SkewedGambling":
-        for run in range(1,4):
-            for echo in range (1,4):
-                IntendedFor.append(f"ses-S01/func/sub-{id}_ses-S01_task-{task}_run-0{run}_echo-{echo}_bold.nii.gz")
-    else:
-        print("Error in the task name")
-   
+    for echo in range (1,4):
+        intendedForAllTasks.append(f"ses-S01/func/sub-{id}_ses-S01_task-{task}_echo-{echo}_bold.nii.gz")
 
+
+
+# loop over runs and echoes for the gambling task 
+for run in range(1,4):
+    for echo in range (1,4):
+        intendedForGambling.append(f"ses-S01/func/sub-{id}_ses-S01_task-SkewedGambling_run-0{run}_echo-{echo}_bold.nii.gz")
+
+   
     
 # loop over the json files and add the IntendedFor field
 for json_file in json_files:
     json_file_path = f'{directory_path}/{json_file}'
     with open(json_file_path, 'r') as file:
         data = json.load(file)
-        data["IntendedFor"] = IntendedFor
+        # define the intendedFor based on task name
+        if "allOtherTasks" in json_file:
+            data["IntendedFor"] = intendedForAllTasks
+        elif "gamblingTask" in json_file:
+            data["IntendedFor"] = intendedForGambling
+        else:
+            print(f"Warning: {json_file} does not match expected field map names. Skipping...")
+        # write it
         with open(json_file_path, 'w') as file:
             json.dump(data, file, indent=4)       
+
+#---------------------------- end of script ---------------------------------------------#
 ```
-
-
-
-
-
-
-

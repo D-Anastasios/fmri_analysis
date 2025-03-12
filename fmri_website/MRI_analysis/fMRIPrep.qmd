@@ -18,6 +18,7 @@ Based on:
 2.  [@provins2023]
 3.  [@fmriprep]
 4.  Notes after my discussion with Gaëlle Leroux (CRNL) on 25/04/2024
+5.  <https://github.com/transatlantic-comppsych/fmriprep_qa_guide?tab=readme-ov-file> (qc guide)
 
 ToDO:
 

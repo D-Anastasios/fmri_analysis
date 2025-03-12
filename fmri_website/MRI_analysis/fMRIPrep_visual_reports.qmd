@@ -78,12 +78,26 @@ Overall summary of the pipeline: information about anatomical and functional ima
 
 ### Surface reconstruction
 
--   White matter in [blue]{style="color:blue;"}
--   Pial surface in [red]{style="color:red;"}
+-   White matter in [blue]{style="color:blue;"} (should follow the boundary between the grey matter and the white matter)
+-   Pial surface in [red]{style="color:red;"} (should outline the outer boundary of the grey matter and exclude the cerebellum)
 -   These are overlaid on the participant’s T1w image
 -   Usually you do not exclude data here except the reconstructed surfaces are extremely inaccurate but you should already have seen that in MRIQC
 
+From [here](https://github.com/transatlantic-comppsych/fmriprep_qa_guide) they suggest also:
+
+-   That you check the same checks for the mask and segmentation
+
+-   And they provide this image as a good example:
+
+![](resources/surface_reconstruction.png)
+
 ## Functional Section
+
+From [here](https://github.com/transatlantic-comppsych/fmriprep_qa_guide): Look at the information text provided to check:
+
+-   Is there any mismatching parameters(TR, phase encoding direction, sequence details, slice timing, susceptibility correction,registration)?
+
+-   Is there any non-steady state volumes? Make sure you note them for later on adding to your GLM analysis ( columns indicate non-steady state volumes with a single `1` value and `0` elsewhere).
 
 ### Alignment between the anatomical reference of the fieldmap and the target EPI
 
@@ -96,15 +110,45 @@ Overall summary of the pipeline: information about anatomical and functional ima
 -   A GIF that shows before and after distortion correction
 -   Note that the correction is affected by the direction AP vs PA
 -   **Any observation of susceptibility distortion artifacts leads to the exclusion of the scan**
+-   The after image should also appear less distorted and shaped more like a normal brain, this may be subtle when the distortion correction is working, but can really, really stand out when it fails.
 
 **Example:**
 
 ![](resources/susc_distort_correction.png)
 
-### CompCor by default in fmriprep
+### Brain mask and (temporal/anatomical) CompCor ROIs
 
 -   Data driven approach to add nuisance regressors
 -   If you want to use this approach check also the correlation heatmap
+-   Make sure the brain mask shown by the red contour is outside the brain mask in the functional images
+-   Make sure the magenda lines are well inside the white matter/csf
+-   In general, areas outlined by the blue lines should be areas with high CSF or blood flow, such as
+    -   between the hemispheres
+    -   in ventricles
+    -   between the cortex and cerebellum.
+-   These are the most variable voxels that will be used later on for functional component correction
+
+#### [Examples:](https://github.com/transatlantic-comppsych/fmriprep_qa_guide)
+
+-   This one is worth checking, as the red line cuts of some of the spinal cord at the bottom. Ultimately, this is usable:
+
+    ![](resources/compcor1.png)
+
+-   The distortion in the cerebellum is worth noting, but this is usable as well:
+
+    ![](resources/compcor2.png)
+
+-   The red line includes some dura at x=-2. Since it's only on the midline, it's still acceptable:
+
+    ![](resources/compcor3.png)
+
+-   Severe dropout like this isn't usable:
+
+    ![](resources/compcor4.png)
+
+-   Bad
+
+    ![](resources/compcor5.png)
 
 ### Alignment of functional and anatomical MRI data (coregistration)
 
@@ -112,20 +156,32 @@ Overall summary of the pipeline: information about anatomical and functional ima
 
     -   Check the alignment of image intensity edges and the anatomical landmarks (e.g. the ventricles and the corpus callosum) between the BOLD and the T1w images
 
-### Time-series carpet plot and correlation matrices
+### Time-series plots and carpet plot 
 
--   GS: Global Signal
+-   Contains time series plots for
 
--   GSCSF: Global Signal of the Cerebral Spinal Fluid
+    -   GS: Global Signal
 
--   GSWM: Global Signal of the White Matter
+    -   GSCSF: Global Signal of the Cerebral Spinal Fluid
 
--   2 measures of motion
+    -   GSWM: Global Signal of the White Matter
+
+-   and 2 measures of motion
 
     -   DVARS
     -   FD: Framewise displacement
 
 -   Changes in motion tend to be correlated with GS and it is up to us to decide if we include any of these vars in the model. In general DVARS and FD are good ways to account for signal caused by motion artifacts
+
+-   Look for any big spikes in any of the line plots.
+
+-   For carpet plot look for any columns that all seem to have a jump in values, this will look like vertical bands or lines down the plot covers across the entire column for that time point.
+
+### Correlations among nuisance regressors
+
+-   High correlations can maybe explained by a motion that caused a signal change in one tissue type that affects the other.
+
+-   Ideally all these components should be capturing the different elements, noise in your data. However if you see that every single components correlate with the global signal in a high level then,it means something might be wrong and needs further investigation with the data.
 
 ### Smoothing
 

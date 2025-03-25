@@ -20,7 +20,7 @@ my_study=Tiger
 session_name=S01
 
 # change this to the subject you are working on
-subject=XXX 
+subject=XXX
 ```
 
 # Submit the job
